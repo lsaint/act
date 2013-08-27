@@ -2,6 +2,7 @@ package script
 
 import (
     "fmt"
+    "time"
     "encoding/binary"
 
     pb "code.google.com/p/goprotobuf/proto"
@@ -33,17 +34,36 @@ type LuaState struct {
 func NewLuaState(out chan *proto.GateOutPack) *LuaState {
     ls := &LuaState{lua.NewState(), make(chan *StateInPack, 10), out, postman.NewPostman()}
     ls.state.OpenLibs()
-    ls.state.DoFile("./script/glue.lua")
+    if err := ls.state.DoFile("./script/glue.lua"); err != nil {
+        ls.doPrintingErrors(err)
+        panic("lua do file err")
+    }
     RegisterLuaFunction(ls)
     go ls.loop()
     return ls
 }
 
+func (this *LuaState) doPrintingErrors(err error) {
+    if err != nil {
+        if lerr, ok := err.(*lua.LuaError); ok {
+            fmt.Printf("Lua err: %s %d\n", lerr.Error(), len(lerr.StackTrace()))
+            for _, e := range lerr.StackTrace() {
+                fmt.Printf("\tat %s:%d in %s\n", e.ShortSource, e.CurrentLine, e.Name)
+            }
+        } else {
+            fmt.Printf("Error executing lua code: %s\n", err.Error())
+        }
+    }
+}
+
 func (this *LuaState) loop() {
+    ticker := time.Tick(1 * time.Second)
     for {
         select {
             case pack := <-this.stateInChan:
                 this.invokeLua(pack)
+            case <-ticker:
+                this.update()
         }
     }
 }
@@ -60,8 +80,15 @@ func (this *LuaState) invokeLua(pack *StateInPack) {
     this.state.PushNumber(pack.uid)
     this.state.PushString(pack.pname)
     this.state.PushString(pack.data)
-    if lerr := this.state.Call(4, 0); lerr != nil {
-        this.state.RaiseError("---")
+    if err := this.state.Call(4, 0); err != nil {
+        this.doPrintingErrors(err)
+    }
+}
+
+func (this *LuaState) update() {
+    this.state.GetGlobal("update") 
+    if lerr := this.state.Call(0, 0); lerr != nil {
+        this.doPrintingErrors(lerr)
     }
 }
 
