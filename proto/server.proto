@@ -1,0 +1,19 @@
+package proto;
+
+message GateInHeader {
+    required uint32 uid = 1;
+    required uint32 sid = 2;
+}
+
+message GateInPack {
+    required GateInHeader header = 1;
+    required uint32 uri = 2;
+    required bytes bin = 3;
+}
+
+message GateOutPack {
+    repeated uint32 uids = 1;
+    optional uint32 sid = 2;
+    required bytes bin = 3;
+}
+
