@@ -10,6 +10,7 @@ enum GameRole {
 enum Result {
     OK = 0;
     FL = 1;
+    WAIT_OTHER = 101;
 }
 
 enum GameStatus {

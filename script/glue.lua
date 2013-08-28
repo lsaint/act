@@ -5,7 +5,9 @@ package.cpath = "/Users/lsaint/Documents/SRC/pbc/binding/lua/?.so;" .. package.c
 
 protobuf = require "protobuf"
 parser = require "parser"
+
 watchdog = require "watchdog"
+timer = require "timer"
 
 require "json"
 require "uri"
@@ -24,13 +26,13 @@ function dispatch(sid, uid, pname, data)
 end
 
 function SendMsg(pname, msg, uids, sid)
-    _msg = protobuf.encode(pname, msg)
-    --print("len", string.len(_msg))
-    uri = URI[pname]
+    p = string.format("%s%s", "proto.", pname)
+    _msg = protobuf.encode(p, msg)
+    uri = URI[p]
     GoSendMsg(uri, _msg, sid, uids)
 end
 
-function Broadcast(pname, msg, sid)
-    SendMsg(pname, msg, {}, sid)
+function update()
+    timer.update()
 end
 

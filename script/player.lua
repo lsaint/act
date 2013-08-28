@@ -15,3 +15,8 @@ function Player.print(self)
         print(k, v)
     end
 end
+
+function Player.SendMsg(self, pname, msg)
+    print("player.SendMsg", self.user.uid)
+    SendMsg(pname, msg, {self.user.uid}, 0)
+end
