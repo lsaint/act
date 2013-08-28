@@ -102,12 +102,12 @@ message S2CNotfiyPunishOptions {
 }
 
 // 4 用户挑选惩罚项
-message C2SChoosePunishment {
+message C2SPoll {
     required uint32 punish_id = 1;
 }
 
 // 1004
-message S2CChoosePunishmentRep {
+message S2CPollRep {
     required Result ret = 1;
 }
 
@@ -132,11 +132,7 @@ message S2CPunishOverRep {
     required Result ret = 1;
 }
 
-// 6
+// 6 客户端各种异常引发的游戏终止
 message C2SStopGame {
-}
-
-// 2006 
-message S2CNotifyGameStop {
 }
 
