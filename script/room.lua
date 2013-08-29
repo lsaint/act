@@ -32,7 +32,7 @@ end
 
 function GameRoom.OnLogin(self, player, req)
     self.uid2player[req.uid] = player
-    rep = {
+    local rep = {
         ret = "OK",
         status = self.status,
         user = {
@@ -53,14 +53,16 @@ function GameRoom.OnStartGame(self, player, req)
         return
     end
 
-    rep = {ret = "WAIT_OTHER"}
+    local rep = {ret = "WAIT_OTHER"}
     if #self.presenters == 2 then    
         print("start sucess", self.sid)
         self:notifyStatus("Round")
         timer.settimer(5, 1, self.roundStart, self)
+        rep.ret = "OK"
     else 
         print("waiting other")
     end
+    player:SendMsg("S2CStartGameRep", rep)
 end
 
 function GameRoom.roundStart(self)
@@ -74,7 +76,7 @@ function GameRoom.roundStart(self)
         timer.settimer(ROUND_TIME * ar, 1, self.doRound, self, a, ar)
     end
 
-    local a_total_time = (ROUND_COUNT - 1) * ROUND_TIME + A2B_ROUND_INTERVAL
+    local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
     while br < ROUND_COUNT do 
         local t = a_total_time + ROUND_TIME * (br - 1)
         timer.settimer(t, 1, self.doRound, self, b, br)
@@ -117,20 +119,54 @@ function GameRoom.OnPunishOver(self, player, req)
     print("PunishOver")
     if #self.over >= 2 then return end
     table.insert(self.over, player)    
+    local rep = {ret = "WAIT_OTHER"}
     if #self.over == 2 then
-        self:notifyStatus("Ready")
+        self:OnStopGame()
+        rep.ret = "OK"
     else 
         print("waiting other over")
     end
+    player:SendMsg("S2CPunishOverRep", rep)
 end
 
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
     self:notifyStatus("Ready")
+    self.reset()
+end
+
+function GameRoom.reset(self)
+    print("reset")
+    self.presenters = {}
+    self.over = {}
+end
+
+function GameRoom.OnGift(self, player, req)
+    print("OnGift")
+    local rep = {ret = "OK", csn = req.csn}
+    player:SendMsg("S2CGiftRep", rep)
+
+    self:OnGiftCb(player.user.uid, req.to_uid, req.gift, req.csn)
+end
+
+function GameRoom.OnGiftCb(self, from_uid, to_uid, gift, csn)
+    print("OnGiftCb")
+    local giver = self.uid2player[from_uid]
+    local receiver = self.uid2player[to_uid]
+    local rname = ""
+    if receiver ~= nil then 
+        rname = receiver.user.name 
+    end
+    local bc = {
+        giver = {name = giver.user.name},
+        receiver = {name = rname},
+        gift = req.gift
+    }
+    self:Broadcast("S2CNotifyGift", bc)
 end
 
 function GameRoom.OnChat(self, player, req)
-    bc = {
+    local bc = {
         msg = req.msg, 
         user = {
             uid = player.user.uid,

@@ -11,7 +11,7 @@ type AuthServer struct {
 }
 
 func (aus *AuthServer) Start() {
-    ln, err := net.Listen("tcp", ":23803")
+    ln, err := net.Listen("tcp", ":13830")
     if err != nil {
         fmt.Println("authServer err")
     }
