@@ -96,11 +96,11 @@ func (this *GateServer) parse() {
                 } else {
                     gheader = this.conn2gheader[conn]
                 }
-                fmt.Println("gate entry", uri)
+                //fmt.Println("gate entry", uri)
                 this.GateEntry <-&proto.GateInPack{Header: gheader, Uri: pb.Uint32(uri), Bin: msg[4:]}
 
             case gop := <-this.GateExit :
-                fmt.Println("gateout:", gop.GetSid(), gop.GetUids(), len(gop.GetBin()))
+                //fmt.Println("gateout:", gop.GetSid(), gop.GetUids(), len(gop.GetBin()))
                 uids := gop.GetUids()
                 if len(uids) != 0 {
                     for _, uid := range uids {

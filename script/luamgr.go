@@ -69,7 +69,6 @@ func (this *LuaState) loop() {
 }
 
 func (this *LuaState) invokeLua(pack *StateInPack) {
-    fmt.Println("stateInChan")
     defer func() {
         if r := recover(); r != nil {
             fmt.Println("Lua Err:", r)
@@ -110,7 +109,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     for {
         select {
             case pack := <-this.recvChan:
-                fmt.Println("luamgr recv")
+                //fmt.Println("luamgr recv")
                 h := pack.GetHeader()
                 uid, sid := h.GetUid(), h.GetSid()
                 pname := proto.URI2PROTO[pack.GetUri()].Name()[3:]
@@ -123,7 +122,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
 
 func (this *LuaMgr)GetLuaState(sid uint32) *LuaState {
      hash := sid % MAX_STATE   
-     state, exist := this.hash2state[sid] 
+     state, exist := this.hash2state[hash] 
      if !exist {
         state = NewLuaState(this.sendChan)
         this.hash2state[hash] = state
@@ -150,7 +149,7 @@ func RegisterLuaFunction(LS *LuaState) {
             uids = append(uids, uint32(uid))
             //L.Pop(1)
         }
-        fmt.Println(len(msg), uids, sid, uri)
+        //fmt.Println(len(msg), uids, sid, uri)
 
         uri_field := make([]byte, 4)
         binary.LittleEndian.PutUint32(uri_field, uri)

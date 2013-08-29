@@ -2,6 +2,7 @@
 require "utility"
 require "motion"
 require "const"
+require "punish"
 
 GameRoom = {}
 GameRoom.__index = GameRoom
@@ -11,6 +12,7 @@ function GameRoom.new(sid)
    self.sid = sid
    self.uid2player = {}
    self.presenters = {}
+   self.over = {}
    self.status = "Ready"
    return self
 end
@@ -23,11 +25,16 @@ function GameRoom.Broadcast(self, pname, msg)
     SendMsg(pname, msg, {}, self.sid)
 end
 
+function GameRoom.notifyStatus(self, st)
+    self.status = st
+    self:Broadcast("S2CNotifyStatus", {status = st})
+end
+
 function GameRoom.OnLogin(self, player, req)
     self.uid2player[req.uid] = player
     rep = {
         ret = "OK",
-        status = "Ready",
+        status = self.status,
         user = {
             role = "Attendee",
         },
@@ -37,21 +44,20 @@ function GameRoom.OnLogin(self, player, req)
     player:SendMsg("S2CLoginRep", rep)  -- single
 end
 
-function GameRoom.OnStarGame(self, player, req)
+function GameRoom.OnStartGame(self, player, req)
     if req.presenter.role == "PresenterA" then
-        self.presenter[1] = player
+        self.presenters[1] = player
     elseif req.presenter.role == "PresenterB" then
-        self.presenter[2] = player
+        self.presenters[2] = player
     else
-        print("false")
+        return
     end
 
     rep = {ret = "WAIT_OTHER"}
-    if table.getn(self.presenters) == 2 then    
-        print("start sucess")
-        local bc = {status="Round"}
-        self:Broadcast("S2CNotifyStatus", bc)
-        timer.settimer(5, 1, self.RoundStart, self)
+    if #self.presenters == 2 then    
+        print("start sucess", self.sid)
+        self:notifyStatus("Round")
+        timer.settimer(5, 1, self.roundStart, self)
     else 
         print("waiting other")
     end
@@ -59,7 +65,6 @@ end
 
 function GameRoom.roundStart(self)
     print("RoundStart")
-    self.status = "Round"
     local a, b = self.presenters[1],  self.presenters[2]
     local ar, br = 1, 1
 
@@ -75,10 +80,13 @@ function GameRoom.roundStart(self)
         timer.settimer(t, 1, self.doRound, self, b, br)
         br = br + 1
     end
+
+    local round_end_time = a_total_time + ROUND_TIME * (ROUND_COUNT - 1) + 1
+    timer.settimer(round_end_time, 1, self.pollStart, self)
 end
 
 function GameRoom.doRound(self, presenter, r)
-    print("DoRound")
+    print("DoRound", r)
     local m = RandomMotion()
     local bc = {
         presenter = {uid = presenter.user.uid},
@@ -86,6 +94,39 @@ function GameRoom.doRound(self, presenter, r)
         mot = {id = m.id, desc = m.desc },
     }   
     self:Broadcast("S2CNotifyRoundStart", bc)
+end
+
+function GameRoom.pollStart(self)
+    print("pollStart")
+    self:notifyStatus("Poll")
+    local bc = {options = RandomPunish() }
+    self:Broadcast("S2CNotfiyPunishOptions", bc)
+    timer.settimer(POLL_TIME, 1, self.punishStart, self)
+end
+
+function GameRoom.OnPoll(self, player, req)
+    print("OnPoll")
+end
+
+function GameRoom.punishStart(self)
+    print("punishStart")
+    self:notifyStatus("Punish")
+end
+
+function GameRoom.OnPunishOver(self, player, req)
+    print("PunishOver")
+    if #self.over >= 2 then return end
+    table.insert(self.over, player)    
+    if #self.over == 2 then
+        self:notifyStatus("Ready")
+    else 
+        print("waiting other over")
+    end
+end
+
+function GameRoom.OnStopGame(self, player, req)
+    print("OnStopGame")
+    self:notifyStatus("Ready")
 end
 
 function GameRoom.OnChat(self, player, req)
