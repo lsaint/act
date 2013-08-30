@@ -141,7 +141,7 @@ func (this *GateServer) Login(conn *ClientConnection, m pb.Message) *proto.GateI
     // register 
     this.uid2conn[uid] = conn
     if conns, exist := this.sid2conns[sid]; exist {
-        conns = append(conns, conn)
+        this.sid2conns[sid] = append(conns, conn)
     } else {
         conns := make([]*ClientConnection, 0, 10)
         conns = append(conns, conn)
