@@ -39,7 +39,7 @@ function GameRoom.OnLogin(self, player, req)
             role = "Attendee",
         },
     }
-    --self:SendMsg("S2CLoginRep", rep, {player.user.uid}) -- multi
+    --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
     --self:Broadcast("S2CLoginRep", rep) -- all
     player:SendMsg("S2CLoginRep", rep)  -- single
 end
@@ -132,7 +132,7 @@ end
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
     self:notifyStatus("Ready")
-    self.reset()
+    self:reset()
 end
 
 function GameRoom.reset(self)
@@ -146,7 +146,7 @@ function GameRoom.OnGift(self, player, req)
     local rep = {ret = "OK", csn = req.csn}
     player:SendMsg("S2CGiftRep", rep)
 
-    self:OnGiftCb(player.user.uid, req.to_uid, req.gift, req.csn)
+    self:OnGiftCb(player.uid, req.to_uid, req.gift, req.csn)
 end
 
 function GameRoom.OnGiftCb(self, from_uid, to_uid, gift, csn)
@@ -169,8 +169,8 @@ function GameRoom.OnChat(self, player, req)
     local bc = {
         msg = req.msg, 
         user = {
-            uid = player.user.uid,
-            name = player.user.name,
+            uid = player.uid,
+            name = player.name,
         }
     }
     self:Broadcast("S2CNotifyChat", bc)

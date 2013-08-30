@@ -1,20 +1,17 @@
 
 
 Player = {}
-Player.__index = Player
+--Player.__index = Player
 
-function Player.new(user_data)
-    local self = setmetatable({}, Player)
+function Player:new(user_data)
+    --local self = setmetatable(user_data, Player)
+    user_data = user_data or {}
+    setmetatable(user_data, self)
+    self.__index = self
     self.user = user_data
     return self
 end
 
-function Player.print(self)
-    for k, v in pairs(self.user) do
-        print(k, v)
-    end
-end
-
-function Player.SendMsg(self, pname, msg)
+function Player:SendMsg(pname, msg)
     SendMsg(pname, msg, {self.user.uid}, 0)
 end
