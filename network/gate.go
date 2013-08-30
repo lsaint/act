@@ -128,6 +128,7 @@ func (this *GateServer) Logout(conn *ClientConnection) {
             conns = conns[:len(conns)-1]
         }
     }
+    this.sid2conns[sid] = conns
     delete(this.conn2gheader, conn)
     
     this.GateEntry <- &proto.GateInPack{Header: h}
