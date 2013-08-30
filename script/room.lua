@@ -3,6 +3,7 @@ require "utility"
 require "motion"
 require "const"
 require "punish"
+require "guess"
 
 GameRoom = {}
 GameRoom.__index = GameRoom
@@ -15,6 +16,7 @@ function GameRoom.new(sid)
    self.over = {}
    self.status = "Ready"
    self.timer = Timer:new(self.sid)
+   self.guess = Guess:new()
    return self
 end
 
@@ -90,6 +92,7 @@ end
 
 function GameRoom.doRound(self, presenter, r)
     print("DoRound", r)
+    self.guess = Guess:new()
     local m = RandomMotion()
     local bc = {
         presenter = {uid = presenter.user.uid},
@@ -175,9 +178,21 @@ function GameRoom.OnChat(self, player, req)
             name = player.name,
         }
     }
+    if self.status == "Round" then
+        local ret, isfirst, answer = self.guess.guess(player, answer)
+        bc.msg = answer
+        bc.correct = ret
+    end
     self:Broadcast("S2CNotifyChat", bc)
 end
 
 function GameRoom.OnLogout(self, player, req)
+    if player == nil then
+        return
+    end
+    print("OnLogout", player.uid, player.role)
+    if player.role == "PresenterA" or player.role == "PresenterB" then
+        self:OnStopGame()
+    end
 end
 
