@@ -14,6 +14,7 @@ function GameRoom.new(sid)
    self.presenters = {}
    self.over = {}
    self.status = "Ready"
+   self.timer = Timer:new(self.sid)
    return self
 end
 
@@ -57,7 +58,7 @@ function GameRoom.OnStartGame(self, player, req)
     if #self.presenters == 2 then    
         print("start sucess", self.sid)
         self:notifyStatus("Round")
-        timer.settimer(5, 1, self.roundStart, self)
+        self.timer:settimer(5, 1, self.roundStart, self)
         rep.ret = "OK"
     else 
         print("waiting other")
@@ -73,18 +74,18 @@ function GameRoom.roundStart(self)
     self:doRound(a, ar)
     while ar < ROUND_COUNT do
         ar = ar + 1
-        timer.settimer(ROUND_TIME * ar, 1, self.doRound, self, a, ar)
+        self.timer:settimer(ROUND_TIME * ar, 1, self.doRound, self, a, ar)
     end
 
     local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
     while br < ROUND_COUNT do 
         local t = a_total_time + ROUND_TIME * (br - 1)
-        timer.settimer(t, 1, self.doRound, self, b, br)
+        self.timer:settimer(t, 1, self.doRound, self, b, br)
         br = br + 1
     end
 
     local round_end_time = a_total_time + ROUND_TIME * (ROUND_COUNT - 1) + 1
-    timer.settimer(round_end_time, 1, self.pollStart, self)
+    self.timer:settimer(round_end_time, 1, self.pollStart, self)
 end
 
 function GameRoom.doRound(self, presenter, r)
@@ -103,7 +104,7 @@ function GameRoom.pollStart(self)
     self:notifyStatus("Poll")
     local bc = {options = RandomPunish() }
     self:Broadcast("S2CNotfiyPunishOptions", bc)
-    timer.settimer(POLL_TIME, 1, self.punishStart, self)
+    self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
 end
 
 function GameRoom.OnPoll(self, player, req)
@@ -139,6 +140,7 @@ function GameRoom.reset(self)
     print("reset")
     self.presenters = {}
     self.over = {}
+    self.timer = Timer:new(self.sid)
 end
 
 function GameRoom.OnGift(self, player, req)
