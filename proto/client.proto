@@ -103,7 +103,8 @@ message S2CNotifyRoundStart {
 
 // 2003 展示惩罚选项  
 message S2CNotfiyPunishOptions {
-    repeated Punishment options = 1;
+    required UserData loser = 1;
+    repeated Punishment options = 2;
 }
 
 // 4 用户挑选惩罚项
@@ -118,7 +119,6 @@ message S2CPollRep {
 
 // 2004 惩罚开始
 message S2CNotifyPunish {
-    required UserData loser = 1;
     required Punishment punish = 2;
 }
 

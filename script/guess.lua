@@ -3,11 +3,11 @@
 Guess = {}
 
 function Guess:new()
-    setmetatable({}, self)
     self.__index = self
-    self.bingo_players = {}
-    self.correct_answer = "lsaint"
-    return self
+    local ins = setmetatable({}, self)
+    ins.bingo_players = {}
+    ins.correct_answer = "lsaint"
+    return ins
 end
 
 function Guess:guess(player, answer)

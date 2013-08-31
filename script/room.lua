@@ -38,9 +38,7 @@ function GameRoom.OnLogin(self, player, req)
     local rep = {
         ret = "OK",
         status = self.status,
-        user = {
-            role = "Attendee",
-        },
+        user = { },
     }
     --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
     --self:Broadcast("S2CLoginRep", rep) -- all
@@ -95,7 +93,7 @@ function GameRoom.doRound(self, presenter, r)
     self.guess = Guess:new()
     local m = RandomMotion()
     local bc = {
-        presenter = {uid = presenter.user.uid},
+        presenter = {uid = presenter.uid},
         round = r,
         mot = {id = m.id, desc = m.desc },
     }   
@@ -105,7 +103,7 @@ end
 function GameRoom.pollStart(self)
     print("pollStart")
     self:notifyStatus("Poll")
-    local bc = {options = RandomPunish() }
+    local bc = {options = RandomPunish(), loser = self.presenters[1].user }
     self:Broadcast("S2CNotfiyPunishOptions", bc)
     self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
 end

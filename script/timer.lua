@@ -1,15 +1,16 @@
 
 local time_table = {}
+
 Timer = {}
 
 function Timer:new(sid)
-    setmetatable({}, self)
     self.__index = self
-    self.timers = {}
-    self.sid = sid
-    self.tid = 0
-    time_table[sid] = self
-    return self
+    local ins = setmetatable({}, self)
+    ins.timers = {}
+    ins.sid = sid
+    ins.tid = 0
+    time_table[sid] = ins
+    return ins
 end
 
 function Timer:settimer(interval, count, func, ...)

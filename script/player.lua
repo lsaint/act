@@ -1,17 +1,25 @@
 
 
 Player = {}
---Player.__index = Player
 
 function Player:new(user_data)
-    --local self = setmetatable(user_data, Player)
-    user_data = user_data or {}
-    setmetatable(user_data, self)
     self.__index = self
-    self.user = user_data
-    return self
+    local ins = setmetatable({}, self)
+    ins.user = user_data
+    ins:init()
+    return ins      
 end
 
 function Player:SendMsg(pname, msg)
-    SendMsg(pname, msg, {self.user.uid}, 0)
+    SendMsg(pname, msg, {self.uid}, 0)
 end
+
+function Player:init()
+    self.uid            =          self.user.uid                  
+    self.name           =          self.user.name 
+    self.imid           =          self.user.imid 
+    self.sex            =          self.user.sex 
+    self.privilege      =          self.user.privilege 
+    self.role           =          self.user.role       
+end
+

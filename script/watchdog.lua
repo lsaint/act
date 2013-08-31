@@ -17,7 +17,6 @@ local function WatchDog()
         local req = protobuf.decode(proto_name, data)
         local player = room.uid2player[uid]
         if player == nil and pname == "Login" then
-            req.user.uid = req.uid  -- avoid lazy decode
             player = Player:new(req.user)
             room.uid2player[uid] = player
         end
