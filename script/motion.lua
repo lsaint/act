@@ -1,9 +1,9 @@
 
 
 local Motion = {
-    {id = 1, desc = "1号动作"},
-    {id = 2, desc = "2号动作"},
-    {id = 3, desc = "3号动作"},
+    {id = 1, desc = "11"},
+    {id = 2, desc = "22"},
+    {id = 3, desc = "33"},
 }
 
 

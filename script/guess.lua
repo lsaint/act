@@ -2,11 +2,11 @@
 
 Guess = {}
 
-function Guess:new()
+function Guess:new(m)
     self.__index = self
     local ins = setmetatable({}, self)
     ins.bingo_players = {}
-    ins.correct_answer = "lsaint"
+    ins.correct_answer = m
     return ins
 end
 
@@ -23,5 +23,5 @@ function Guess:guess(player, answer)
 end
 
 function Guess:check(answer)
-    return string.find(answer, self.correct_answer) or false
+    return string.find(answer, self.correct_answer.desc) or false
 end

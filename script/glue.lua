@@ -29,7 +29,7 @@ function SendMsg(pname, msg, uids, sid)
     p = string.format("%s%s", "proto.", pname)
     _msg = protobuf.encode(p, msg)
     uri = URI[p]
-    print("LuaSendMsg", pname, uids[1], sid)
+    --print("LuaSendMsg", pname, uids[1], sid)
     GoSendMsg(uri, _msg, sid, uids)
 end
 

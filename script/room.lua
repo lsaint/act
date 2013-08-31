@@ -4,6 +4,7 @@ require "motion"
 require "const"
 require "punish"
 require "guess"
+require "gift"
 
 GameRoom = {}
 GameRoom.__index = GameRoom
@@ -12,14 +13,20 @@ function GameRoom.new(sid)
     local self = setmetatable({}, GameRoom)
     self.sid = sid
     self.uid2player = {}
+    self.status = "Ready"
+    self:init()
+    return self
+end
+
+function GameRoom.init(self)
+    print("init")
     self.presenters = {}
     self.over = {}
-    self.status = "Ready"
-    self.round_info = {}
     self.scores = {0, 0}
+    self.round_info = {}
     self.timer = Timer:new(self.sid)
     self.guess = Guess:new()
-    return self
+    self.giftmgr = GiftMgr:new()
 end
 
 function GameRoom.SendMsg(self, pname, msg, uids)
@@ -61,9 +68,15 @@ function GameRoom.OnStartGame(self, player, req)
         print("start sucess", self.sid)
         self:notifyStatus("Round")
         self.timer:settimer(5, 1, self.roundStart, self)
+        local bc_vip_count = (TOTAL_ROUND_TIME + POLL_TIME) / BC_VIP_INTERVAL + 1
+        self.timer:settimer(BC_VIP_INTERVAL, bc_vip_count, self.notifyVips, self)
+        self.giftmgr = GiftMgr:new(self.presenters)
         rep.ret = "OK"
     else 
         print("waiting other")
+        local p = self.presenters[#self.presenters] or self.presenters[2]
+        local bc = {presenter = {uid = p.uid}}
+        self:Broadcast("S2CNotifyReady", bc)
     end
     player:SendMsg("S2CStartGameRep", rep)
 end
@@ -96,8 +109,8 @@ end
 function GameRoom.doRound(self, presenter, r)
     print("DoRound", r)
     self.round_info = {presenter, r}
-    self.guess = Guess:new()
     local m = RandomMotion()
+    self.guess = Guess:new(m)
     local bc = {
         presenter = {uid = presenter.uid},
         round = r,
@@ -115,13 +128,22 @@ end
 function GameRoom.pollStart(self)
     print("pollStart")
     self:notifyStatus("Poll")
-    local bc = {options = RandomPunish(), loser = self.presenters[1].user }
+    local bc = {options = RandomPunish(), loser = self.presenters[1].user}
+    self.giftmgr.options = bc.options
     self:Broadcast("S2CNotfiyPunishOptions", bc)
+    self:Broadcast("S2CNotifyTop3Giver", self.giftmgr:top3())
     self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
+    self.timer:settimer(BC_POLLS_INTERVAL, POLL_TIME/2+1, self.notifyPolls, self)
 end
 
 function GameRoom.OnPoll(self, player, req)
     print("OnPoll")
+    player:SendMsg("S2CPollRep", {ret = "OK"})
+end
+
+function GameRoom.notifyPolls(self)
+    print("notifyPolls")
+    self:Broadcast("S2CNotifyPolls", {polls = self.giftmgr.polls})
 end
 
 function GameRoom.punishStart(self)
@@ -139,6 +161,8 @@ function GameRoom.OnPunishOver(self, player, req)
         rep.ret = "OK"
     else 
         print("waiting other over")
+        self:Broadcast("S2CNotifyPunishOver",
+                {presenter = {uid = self.over[1].uid}})
     end
     player:SendMsg("S2CPunishOverRep", rep)
 end
@@ -146,21 +170,16 @@ end
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
     self:notifyStatus("Ready")
-    self:reset()
+    self:init()
 end
 
-function GameRoom.reset(self)
-    print("reset")
-    self.presenters = {}
-    self.over = {}
-    self.scores = {}
-    self.round_info = {}
-    self.timer = Timer:new(self.sid)
-end
 
 function GameRoom.OnGift(self, player, req)
     print("OnGift")
     local rep = {ret = "OK", csn = req.csn}
+    if self.giftmgr == nil then
+        rep.ret = "FL"
+    end
     player:SendMsg("S2CGiftRep", rep)
 
     self:OnGiftCb(player.uid, req.to_uid, req.gift, req.csn)
@@ -172,10 +191,10 @@ function GameRoom.OnGiftCb(self, from_uid, to_uid, gift, csn)
     local receiver = self.uid2player[to_uid]
     local rname = ""
     if receiver ~= nil then 
-        rname = receiver.user.name 
+        rname = receiver.name 
     end
     local bc = {
-        giver = {name = giver.user.name},
+        giver = {name = giver.name},
         receiver = {name = rname},
         gift = req.gift
     }
@@ -191,7 +210,7 @@ function GameRoom.OnChat(self, player, req)
         }
     }
     if self.status == "Round" then
-        local ret, isfirst, answer = self.guess.guess(player, answer)
+        local ret, isfirst, answer = self.guess:guess(player, req.msg)
         bc.msg = answer
         bc.correct = ret
         if isfirst then self:addScore() end
@@ -207,11 +226,19 @@ function  GameRoom.addScore(self)
     end
 end
 
+function GameRoom.notifyVips(self)
+    print("notifyVips")
+    local a, b = self.giftmgr:vips()
+    self:Broadcast("S2CNotifyVips", {a_vip = a,  b_vip = b})
+end
+
 function GameRoom.OnLogout(self, player, req)
     if player == nil then return end
     print("OnLogout", player.uid, player.role)
     if player.role == "PresenterA" or player.role == "PresenterB" then
         self:OnStopGame()
+    else
+        self.uid2player[player.uid] = nil
     end
 end
 

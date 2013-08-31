@@ -77,6 +77,11 @@ message S2CStartGameRep {
      required Result ret = 1;
 }
 
+// 2006 广播其中1位主持人点击了开始
+message S2CNotifyReady {
+    required UserData presenter = 1;
+}
+
 // 2001  游戏状态变更通知
 message S2CNotifyStatus {
     required GameStatus status = 1;
@@ -91,7 +96,7 @@ message C2SChat {
 message S2CNotifyChat {
     required string msg = 1;
     required UserData user = 2; 
-    optional Result correct = 3;
+    optional bool correct = 3;
 }
 
 // 2002 表演开始
@@ -117,9 +122,14 @@ message S2CPollRep {
     required Result ret = 1;
 }
 
+// 2008
+message S2CNotifyPolls {
+    repeated uint32 polls = 1;
+}
+
 // 2004 惩罚开始
 message S2CNotifyPunish {
-    required Punishment punish = 2;
+    required Punishment punish = 1;
 }
 
 // 2005 积分信息
@@ -135,6 +145,11 @@ message C2SPunishOver {
 // 1005
 message S2CPunishOverRep {
     required Result ret = 1;
+}
+
+// 2009 广播其中1位主持人点击了结束
+message S2CNotifyPunishOver {
+    required UserData presenter = 1;
 }
 
 // 6 客户端各种异常引发的游戏终止
@@ -160,4 +175,16 @@ message S2CNotifyGift {
     required UserData receiver = 2;
     required GameGift gift = 3;
 }
+
+// 2010
+message S2CNotifyTop3Giver {
+    repeated uint32 top3 = 1; 
+}
+
+// 2011
+message S2CNotifyVips {
+    repeated uint32 a_vip = 1;
+    repeated uint32 b_vip = 2;
+}
+    
 
