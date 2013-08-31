@@ -9,15 +9,17 @@ GameRoom = {}
 GameRoom.__index = GameRoom
 
 function GameRoom.new(sid)
-   local self = setmetatable({}, GameRoom)
-   self.sid = sid
-   self.uid2player = {}
-   self.presenters = {}
-   self.over = {}
-   self.status = "Ready"
-   self.timer = Timer:new(self.sid)
-   self.guess = Guess:new()
-   return self
+    local self = setmetatable({}, GameRoom)
+    self.sid = sid
+    self.uid2player = {}
+    self.presenters = {}
+    self.over = {}
+    self.status = "Ready"
+    self.round_info = {}
+    self.scores = {0, 0}
+    self.timer = Timer:new(self.sid)
+    self.guess = Guess:new()
+    return self
 end
 
 function GameRoom.SendMsg(self, pname, msg, uids)
@@ -86,10 +88,14 @@ function GameRoom.roundStart(self)
 
     local round_end_time = a_total_time + ROUND_TIME * (ROUND_COUNT - 1) + 1
     self.timer:settimer(round_end_time, 1, self.pollStart, self)
+
+    local notify_score_count = round_end_time / BC_SCORE_INTERVAL + 1
+    self.timer:settimer(BC_SCORE_INTERVAL, notify_score_count, self.notifyScore, self)
 end
 
 function GameRoom.doRound(self, presenter, r)
     print("DoRound", r)
+    self.round_info = {presenter, r}
     self.guess = Guess:new()
     local m = RandomMotion()
     local bc = {
@@ -98,6 +104,12 @@ function GameRoom.doRound(self, presenter, r)
         mot = {id = m.id, desc = m.desc },
     }   
     self:Broadcast("S2CNotifyRoundStart", bc)
+end
+
+function GameRoom.notifyScore(self)
+    print("notifyScore")
+    local bc = {scores = self.scores}
+    self:Broadcast("S2CNotifyScores", bc)
 end
 
 function GameRoom.pollStart(self)
@@ -141,6 +153,8 @@ function GameRoom.reset(self)
     print("reset")
     self.presenters = {}
     self.over = {}
+    self.scores = {}
+    self.round_info = {}
     self.timer = Timer:new(self.sid)
 end
 
@@ -180,14 +194,21 @@ function GameRoom.OnChat(self, player, req)
         local ret, isfirst, answer = self.guess.guess(player, answer)
         bc.msg = answer
         bc.correct = ret
+        if isfirst then self:addScore() end
     end
     self:Broadcast("S2CNotifyChat", bc)
 end
 
-function GameRoom.OnLogout(self, player, req)
-    if player == nil then
-        return
+function  GameRoom.addScore(self)
+    if self.round_info[1] == self.presenters[1] then
+        self.scores[1] = self.scores[1] + BINGO_SCORE
+    elseif self.round_info[2] == self.presenters[2] then
+        self.scores[2] = self.scores[2] + BINGO_SCORE
     end
+end
+
+function GameRoom.OnLogout(self, player, req)
+    if player == nil then return end
     print("OnLogout", player.uid, player.role)
     if player.role == "PresenterA" or player.role == "PresenterB" then
         self:OnStopGame()
