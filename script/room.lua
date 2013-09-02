@@ -25,8 +25,8 @@ function GameRoom.init(self)
     self.scores = {0, 0}
     self.round_info = {}
     self.timer = Timer:new(self.sid)
-    self.guess = Guess:new()
-    self.giftmgr = GiftMgr:new()
+    self.guess = nil
+    self.giftmgr =  nil
 end
 
 function GameRoom.SendMsg(self, pname, msg, uids)
@@ -70,7 +70,7 @@ function GameRoom.OnStartGame(self, player, req)
         self.timer:settimer(5, 1, self.roundStart, self)
         local bc_vip_count = (TOTAL_ROUND_TIME + POLL_TIME) / BC_VIP_INTERVAL + 1
         self.timer:settimer(BC_VIP_INTERVAL, bc_vip_count, self.notifyVips, self)
-        self.giftmgr = GiftMgr:new(self.presenters)
+        self.giftmgr = GiftMgr:new(self.sid, self.presenters)
         rep.ret = "OK"
     else 
         print("waiting other")
@@ -169,6 +169,10 @@ end
 
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
+    if player ~= nil and string.find(player.role, "Presenter") == nil then
+        print("no auth to stop", player.uid)
+        return
+    end
     self:notifyStatus("Ready")
     self:init()
 end
@@ -219,6 +223,7 @@ function GameRoom.OnChat(self, player, req)
 end
 
 function  GameRoom.addScore(self)
+    print("addScore")
     if self.round_info[1] == self.presenters[1] then
         self.scores[1] = self.scores[1] + BINGO_SCORE
     elseif self.round_info[2] == self.presenters[2] then

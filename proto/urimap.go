@@ -14,7 +14,7 @@ var URI2PROTO Uri2Proto = Uri2Proto {
     4       :   reflect.TypeOf(C2SPoll{}),
     5       :   reflect.TypeOf(C2SPunishOver{}),
     6       :   reflect.TypeOf(C2SStopGame{}),
-    7       :   reflect.TypeOf(C2SGift{}),
+    7       :   reflect.TypeOf(C2SRegGift{}),
 }
 
 

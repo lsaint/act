@@ -13,9 +13,10 @@ local GiftPower = {
 
 GiftMgr = {}
 
-function GiftMgr:new(presenters)
+function GiftMgr:new(sid, presenters)
     self.__index = self
     local ins = setmetatable({}, self)
+    ins.sid = sid
     ins.presenters = presenters
     ins.powers = {} -- {uid=power}
     ins.camps = {{}, {}} -- {camp_a, camp_b}
@@ -25,11 +26,25 @@ function GiftMgr:new(presenters)
     return ins
 end
 
-function GiftMgr:give(player, req, status)
-
+-- req -- [to_uid, gift.id, gift.count, sn]
+function GiftMgr:regGiftOrder(from_uid, req)
+    local t = os.date("%Y%m%d%H%M%S")
+    local to_md5_args = { APPID, from_uid, req.to_uid, req.gift.id,
+                          req.gift.count, req.csn, self.sid, SRVID, 
+                          t, AUTH_KEY }
+    local to_md5 = string.format("%s%s%s%s%s%s%s%s%s%s", unpack(to_md5_args))
+    local post_string = string.format(
+       "appid=%s&fromuid=%s&touid=%s&giftid=%s&giftcount=%s&sn=%s&ch=%s&srvid=%s&time=%s&verify=%s", 
+        unpack(to_md5_args), GoMd5(to_md5))
+    local order = GoPost(post_string)
+    order = split(order, "&")
+    if #order <= 1 then
+        return false
+    end
+    return split(order[1], "=")[2]
 end
 
-function GiftMgr:getOrder(uid)
+function GiftMgr:whichPresenter(uid)
     if self.presenters[1].uid == uid then
         return 1
     elseif self.presenters[2].uid == uid then
@@ -43,7 +58,7 @@ function GiftMgr:givecb(uid, touid, gift)
     local cur_p  = self.powers[uid] or 0
     self.powers[uid] = p + cur_p
 
-    local o = self:getOrder(touid)
+    local o = self:whichPresenter(touid)
     if o == nil then return end
     cur_p = self.camps[o].uid or 0
     self.camps[o][uid] = cur_p + p

@@ -92,11 +92,12 @@ message C2SChat {
     required string msg = 1;
 }
 
-// 1003 
+// 2012 
 message S2CNotifyChat {
     required string msg = 1;
-    required UserData user = 2; 
-    optional bool correct = 3;
+    optional UserData user = 2; 
+    optional bool correct = 3; // 猜对
+    optional uint32 type = 4; // 空值表示用户聊天 其他为系统广播
 }
 
 // 2002 表演开始
@@ -154,18 +155,19 @@ message S2CNotifyPunishOver {
 
 // 6 客户端各种异常引发的游戏终止
 message C2SStopGame {
+    required uint32 reason = 1;
 }
 
-// 7 
-message C2SGift {
+// 7 获取送礼token
+message C2SRegGift {
     required uint32 to_uid = 1;
     required GameGift gift = 2; 
     required uint32 csn = 3;   // 客户端流水号
 }
 
 // 1007
-message S2CGiftRep {
-    required Result ret = 1;
+message S2CRegGiftRep {
+    required string token = 1; // 空则失败
     required uint32 csn = 2;   
 }
 

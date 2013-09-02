@@ -1,9 +1,11 @@
 package script
 
 import (
+    "io"
     "fmt"
     "time"
     "encoding/binary"
+    "crypto/md5"
 
     pb "code.google.com/p/goprotobuf/proto"
     "github.com/aarzilli/golua/lua"
@@ -137,6 +139,7 @@ func RegisterLuaFunction(LS *LuaState) {
     // arg2: msg        string
     // arg3: sid        uint32
     // arg4: uids       []uint32
+    // return: nil
     Lua_SendMsg := func(L *lua.State) int {
         uri := uint32(L.ToInteger(1))
         msg := L.ToString(2)
@@ -161,6 +164,7 @@ func RegisterLuaFunction(LS *LuaState) {
     }
 
     // arg1: post_string    string
+    // return: post result's raw string
     Lua_Post := func(L *lua.State) int {
         post_string := L.ToString(1)
         ret := LS.pm.Post(post_string)
@@ -168,8 +172,19 @@ func RegisterLuaFunction(LS *LuaState) {
         return 1
     }
 
+    // arg1: string to md5
+    // return: md5 string
+    Lua_Md5 := func(L *lua.State) int {
+        to_md5 := L.ToString(1)
+        m5 := md5.New()
+        io.WriteString(m5, to_md5)
+        L.PushString(fmt.Sprintf("%x", m5.Sum(nil)))
+        return 1
+    }
+
     LS.state.Register("GoSendMsg", Lua_SendMsg)
     LS.state.Register("GoPost", Lua_Post)
+    LS.state.Register("GoMd5", Lua_Md5)
 }
 
 
