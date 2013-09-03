@@ -38,3 +38,6 @@ function update()
     TimerUpdate()
 end
 
+function giftCb(sid, uid, touid, giftid, giftcout, orderid)
+end
+

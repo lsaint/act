@@ -6,6 +6,7 @@ import (
     "time"
     "encoding/binary"
     "crypto/md5"
+    "strconv"
 
     pb "code.google.com/p/goprotobuf/proto"
     "github.com/aarzilli/golua/lua"
@@ -31,10 +32,12 @@ type LuaState struct {
     stateInChan         chan *StateInPack
     stateOutChan        chan *proto.GateOutPack
     pm                  *postman.Postman             
+    giftCbChan          chan *proto.GiftCbPack
 }
 
 func NewLuaState(out chan *proto.GateOutPack) *LuaState {
-    ls := &LuaState{lua.NewState(), make(chan *StateInPack, 10), out, postman.NewPostman()}
+    ls := &LuaState{lua.NewState(), make(chan *StateInPack, 10), out, postman.NewPostman(),
+                        make(chan *proto.GiftCbPack, 64)}
     ls.state.OpenLibs()
     if err := ls.state.DoFile("./script/glue.lua"); err != nil {
         ls.doPrintingErrors(err)
@@ -63,14 +66,16 @@ func (this *LuaState) loop() {
     for {
         select {
             case pack := <-this.stateInChan:
-                this.invokeLua(pack)
+                this.onProto(pack)
             case <-ticker:
                 this.update()
+            case pack := <-this.giftCbChan:
+                this.onGiftCb(pack)
         }
     }
 }
 
-func (this *LuaState) invokeLua(pack *StateInPack) {
+func (this *LuaState) onProto(pack *StateInPack) {
     defer func() {
         if r := recover(); r != nil {
             fmt.Println("Lua Err:", r)
@@ -93,11 +98,24 @@ func (this *LuaState) update() {
     }
 }
 
+func (this *LuaState) onGiftCb(pack *proto.GiftCbPack) {
+    this.state.GetGlobal("giftCb") 
+    this.state.PushString(pack.GetSid())
+    this.state.PushString(pack.GetFromUid())
+    this.state.PushString(pack.GetToUid())
+    this.state.PushString(pack.GetGiftId())
+    this.state.PushString(pack.GetGiftCount())
+    this.state.PushString(pack.GetOrderId())
+    if err := this.state.Call(6, 0); err != nil {
+        this.doPrintingErrors(err)
+    }
+}
 
 type LuaMgr struct {
     hash2state       map[uint32]*LuaState
     recvChan        chan *proto.GateInPack
     sendChan        chan *proto.GateOutPack
+    giftCbChan      chan *proto.GiftCbPack
 }
 
 func NewLuaMgr() *LuaMgr {
@@ -108,6 +126,8 @@ func NewLuaMgr() *LuaMgr {
 func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack) {
     fmt.Println("LuaMgr running")
     this.sendChan, this.recvChan = out, in
+    httpCb := postman.NewHttpCb()
+    go httpCb.Start()
     for {
         select {
             case pack := <-this.recvChan:
@@ -118,6 +138,12 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
                 state := this.GetLuaState(sid)
                 state.stateInChan <- &StateInPack{float64(sid), float64(uid), pname,
                                         string(pack.GetBin())}
+
+            case pack := <-httpCb.GiftCbChan:
+                if sid, err := strconv.ParseUint(pack.GetSid(), 10, 64); err != nil {
+                    state := this.GetLuaState(uint32(sid))
+                    state.giftCbChan <- pack
+                }
         }
     }
 }

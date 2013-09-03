@@ -24,7 +24,7 @@ function split(str, pat)
    local s, e, cap = str:find(fpat, 1)
    while s do
       if s ~= 1 or cap ~= "" then
-     table.insert(t,cap)
+         table.insert(t,cap)
       end
       last_end = e+1
       s, e, cap = str:find(fpat, last_end)
@@ -35,3 +35,16 @@ function split(str, pat)
    end
    return t
 end
+
+
+function parseUrlArg(ss)
+    local r, ret = split(ss, "&"), {}
+    for i, v in ipairs(r) do
+        local t = split(v, "=")
+        if #t == 2 then
+            ret[t[1]] = t[2]
+        end
+    end
+    return ret
+end
+

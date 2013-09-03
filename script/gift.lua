@@ -11,7 +11,9 @@ local GiftPower = {
     [8] = 2500,
 }
 
+
 GiftMgr = {}
+GiftMgr.orderid2req = {}
 
 function GiftMgr:new(sid, presenters)
     self.__index = self
@@ -26,7 +28,7 @@ function GiftMgr:new(sid, presenters)
     return ins
 end
 
--- req -- [to_uid, gift.id, gift.count, sn]
+-- req -- [to_uid, gift.id, gift.count, csn]
 function GiftMgr:regGiftOrder(from_uid, req)
     local t = os.date("%Y%m%d%H%M%S")
     local to_md5_args = { APPID, from_uid, req.to_uid, req.gift.id,
@@ -36,12 +38,17 @@ function GiftMgr:regGiftOrder(from_uid, req)
     local post_string = string.format(
        "appid=%s&fromuid=%s&touid=%s&giftid=%s&giftcount=%s&sn=%s&ch=%s&srvid=%s&time=%s&verify=%s", 
         unpack(to_md5_args), GoMd5(to_md5))
-    local order = GoPost(post_string)
-    order = split(order, "&")
-    if #order <= 1 then
-        return false
+    local ss = GoPost(post_string)
+    local op, orderid, token = self:checkPostRet(ss)
+    if orderid ~= "" then
+        self.orderid2req[orderid] = req
     end
-    return split(order[1], "=")[2]
+    return token
+end
+
+function GiftMgr:checkPostRet(ss)
+    local ret = parseUrlArg(ss)
+    return ret["op_ret"] or "", ret["orderid"] or "", ret["token"] or ""
 end
 
 function GiftMgr:whichPresenter(uid)

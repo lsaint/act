@@ -16,3 +16,12 @@ type RoomOutPack struct {
     Msg         pb.Message
 }
 
+type GiftCbPack struct {
+    Sid         string
+    FromUid     string
+    ToUid       string
+    GiftId      string
+    GiftCount   string
+    OrderId     string
+}
+

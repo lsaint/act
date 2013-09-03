@@ -177,32 +177,36 @@ function GameRoom.OnStopGame(self, player, req)
     self:init()
 end
 
-
-function GameRoom.OnGift(self, player, req)
-    print("OnGift")
-    local rep = {ret = "OK", csn = req.csn}
-    if self.giftmgr == nil then
-        rep.ret = "FL"
+function GameRoom.OnRegGift(self, player, req)
+    print("OnRegGift")
+    local rep = {token = "", csn = req.csn}
+    if self.giftmgr ~= nil then
+        rep.ret = self.giftmgr.regGiftOrder(player.uid, req)
     end
-    player:SendMsg("S2CGiftRep", rep)
+    player:SendMsg("S2CRegGiftRep", rep)
 
     self:OnGiftCb(player.uid, req.to_uid, req.gift, req.csn)
 end
 
-function GameRoom.OnGiftCb(self, from_uid, to_uid, gift, csn)
+function GameRoom.OnGiftCb(self, from_uid, to_uid, gift, orderid)
     print("OnGiftCb")
-    local giver = self.uid2player[from_uid]
-    local receiver = self.uid2player[to_uid]
-    local rname = ""
+    local req = GiftMgr.orderid2req[orderid]
+    if req == nil then return end
+    local giver, receiver = self.uid2player[from_uid], self.uid2player[to_uid]
+    local gname, rname = ""
     if receiver ~= nil then 
         rname = receiver.name 
     end
+    if gname ~= nil then 
+        gname = giver.name 
+    end
     local bc = {
-        giver = {name = giver.name},
+        giver = {name = gname},
         receiver = {name = rname},
-        gift = req.gift
+        gift = gift
     }
     self:Broadcast("S2CNotifyGift", bc)
+    GiftMgr.orderid2req[orderid] = nil
 end
 
 function GameRoom.OnChat(self, player, req)
@@ -229,6 +233,7 @@ function  GameRoom.addScore(self)
     elseif self.round_info[2] == self.presenters[2] then
         self.scores[2] = self.scores[2] + BINGO_SCORE
     end
+    print(table.concat(self.scores, " : "))
 end
 
 function GameRoom.notifyVips(self)
@@ -240,7 +245,8 @@ end
 function GameRoom.OnLogout(self, player, req)
     if player == nil then return end
     print("OnLogout", player.uid, player.role)
-    if player.role == "PresenterA" or player.role == "PresenterB" then
+    if string.find(player.role, "Presenter") ~= nil and 
+        self.status ~= "Ready" then
         self:OnStopGame()
     else
         self.uid2player[player.uid] = nil

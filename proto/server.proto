@@ -17,3 +17,11 @@ message GateOutPack {
     required bytes bin = 3;
 }
 
+message GiftCbPack {
+    required  string Sid         = 1;
+    required  string FromUid     = 2;
+    required  string ToUid       = 3;
+    required  string GiftId      = 4;
+    required  string GiftCount   = 5;
+    required  string OrderId     = 6;
+}
