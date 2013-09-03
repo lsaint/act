@@ -23,7 +23,7 @@ function GameRoom.init(self)
     self.presenters = {}
     self.over = {}
     self.scores = {0, 0}
-    self.round_info = {}
+    self.round_info = {} -- {presenter, round_number}
     self.timer = Timer:new(self.sid)
     self.guess = nil
     self.giftmgr =  nil
@@ -188,18 +188,15 @@ function GameRoom.OnRegGift(self, player, req)
     self:OnGiftCb(player.uid, req.to_uid, req.gift, req.csn)
 end
 
-function GameRoom.OnGiftCb(self, from_uid, to_uid, gift, orderid)
+function GameRoom.OnGiftCb(self, from_uid, to_uid, gid, gcount, orderid)
     print("OnGiftCb")
     local req = GiftMgr.orderid2req[orderid]
+    self.giftmgr:giveCb(from_uid, to_uid, gid, gcount)
     if req == nil then return end
     local giver, receiver = self.uid2player[from_uid], self.uid2player[to_uid]
     local gname, rname = ""
-    if receiver ~= nil then 
-        rname = receiver.name 
-    end
-    if gname ~= nil then 
-        gname = giver.name 
-    end
+    if receiver ~= nil then rname = receiver.name end
+    if gname ~= nil then gname = giver.name end
     local bc = {
         giver = {name = gname},
         receiver = {name = rname},
@@ -227,7 +224,7 @@ function GameRoom.OnChat(self, player, req)
 end
 
 function  GameRoom.addScore(self)
-    print("addScore")
+    print("addScore", self.presenter[2])
     if self.round_info[1] == self.presenters[1] then
         self.scores[1] = self.scores[1] + BINGO_SCORE
     elseif self.round_info[2] == self.presenters[2] then

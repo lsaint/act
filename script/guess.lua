@@ -11,17 +11,17 @@ function Guess:new(m)
 end
 
 function Guess:guess(player, answer)
-    local first_bingo = (self.bingo_players[player.uid] == true)
+    local first_bingo = (self.bingo_players[player.uid] == nil)
     local ret = self:check(answer)
-    if ret == true and first_bingo ~= true then
+    if ret and first_bingo then
         self.bingo_players[player.uid] = true
     end
-    if ret == true then
+    if ret then
         answer = "***"
     end
     return ret, first_bingo, answer
 end
 
 function Guess:check(answer)
-    return string.find(answer, self.correct_answer.desc) or false
+    return string.find(answer, self.correct_answer.desc) ~= nil
 end

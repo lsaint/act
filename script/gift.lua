@@ -60,8 +60,8 @@ function GiftMgr:whichPresenter(uid)
     return nil
 end
 
-function GiftMgr:givecb(uid, touid, gift)
-    local p = GiftPower[gift.id] * gift.count
+function GiftMgr:giveCb(uid, touid, gid, gcount)
+    local p = GiftPower[gid] * gcount
     local cur_p  = self.powers[uid] or 0
     self.powers[uid] = p + cur_p
 
