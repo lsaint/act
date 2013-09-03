@@ -17,6 +17,9 @@ import (
 
 const (
     MAX_STATE = 2
+    PROTO_INVOKE = iota
+    UPDATE_INVOKE = iota
+    CB_INVOKE = iota
 )
 
 
@@ -66,39 +69,52 @@ func (this *LuaState) loop() {
     for {
         select {
             case pack := <-this.stateInChan:
-                this.onProto(pack)
+                this.invokeLua(PROTO_INVOKE, pack)
             case <-ticker:
-                this.update()
+                this.invokeLua(UPDATE_INVOKE)
             case pack := <-this.giftCbChan:
-                this.onGiftCb(pack)
+                this.invokeLua(CB_INVOKE, pack)
         }
     }
 }
 
-func (this *LuaState) onProto(pack *StateInPack) {
+func (this *LuaState) invokeLua(t int, args ...interface{}) {
     defer func() {
         if r := recover(); r != nil {
             fmt.Println("Lua Err:", r)
         }
     }()
+    var err error
+    switch t {
+        case PROTO_INVOKE:
+            pack, _ := args[0].(*StateInPack)
+            err = this.onProto(pack)
+        case UPDATE_INVOKE:
+            err = this.onUpdate()
+        case CB_INVOKE:
+            pack, _ := args[0].(*proto.GiftCbPack)
+            err = this.onGiftCb(pack)
+    }
+    if err != nil {
+        this.doPrintingErrors(err)
+    }
+}
+
+func (this *LuaState) onProto(pack *StateInPack) error {
     this.state.GetGlobal("dispatch")
     this.state.PushNumber(pack.sid)
     this.state.PushNumber(pack.uid)
     this.state.PushString(pack.pname)
     this.state.PushString(pack.data)
-    if err := this.state.Call(4, 0); err != nil {
-        this.doPrintingErrors(err)
-    }
+    return this.state.Call(4, 0)
 }
 
-func (this *LuaState) update() {
+func (this *LuaState) onUpdate() error {
     this.state.GetGlobal("update") 
-    if lerr := this.state.Call(0, 0); lerr != nil {
-        this.doPrintingErrors(lerr)
-    }
+    return this.state.Call(0, 0)
 }
 
-func (this *LuaState) onGiftCb(pack *proto.GiftCbPack) {
+func (this *LuaState) onGiftCb(pack *proto.GiftCbPack) error {
     this.state.GetGlobal("giftCb") 
     this.state.PushString(pack.GetSid())
     this.state.PushString(pack.GetFromUid())
@@ -106,10 +122,10 @@ func (this *LuaState) onGiftCb(pack *proto.GiftCbPack) {
     this.state.PushString(pack.GetGiftId())
     this.state.PushString(pack.GetGiftCount())
     this.state.PushString(pack.GetOrderId())
-    if err := this.state.Call(6, 0); err != nil {
-        this.doPrintingErrors(err)
-    }
+    return this.state.Call(6, 0)
 }
+
+////
 
 type LuaMgr struct {
     hash2state       map[uint32]*LuaState
@@ -149,13 +165,13 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
 }
 
 func (this *LuaMgr)GetLuaState(sid uint32) *LuaState {
-     hash := sid % MAX_STATE   
-     state, exist := this.hash2state[hash] 
-     if !exist {
-        state = NewLuaState(this.sendChan)
-        this.hash2state[hash] = state
-     }
-     return state
+    hash := sid % MAX_STATE   
+    state, exist := this.hash2state[hash] 
+    if !exist {
+       state = NewLuaState(this.sendChan)
+       this.hash2state[hash] = state
+    }
+    return state
 }
 
 
