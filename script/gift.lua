@@ -1,14 +1,10 @@
 
 
 local GiftPower = {
-    [1] = 10,
-    [2] = 10,
-    [3] = 10,
-    [4] = 10,
-    [5] = 80,
-    [6] = 80,
-    [7] = 80,
-    [8] = 2500,
+    [1001] = 10,
+    [1003] = 80,
+    [1009] = 700,
+    [1010] = 2500,
 }
 
 
@@ -35,10 +31,11 @@ function GiftMgr:regGiftOrder(from_uid, req)
                           req.gift.count, req.csn, self.sid, SRVID, 
                           t, AUTH_KEY }
     local to_md5 = string.format("%s%s%s%s%s%s%s%s%s%s", unpack(to_md5_args))
+    to_md5_args[10] = GoMd5(to_md5)
     local post_string = string.format(
        "appid=%s&fromuid=%s&touid=%s&giftid=%s&giftcount=%s&sn=%s&ch=%s&srvid=%s&time=%s&verify=%s", 
-        unpack(to_md5_args), GoMd5(to_md5))
-    local ss = GoPost(post_string)
+        unpack(to_md5_args))
+    local ss = GoPost(GIFT_URL, post_string)
     local op, orderid, token = self:checkPostRet(ss)
     if orderid ~= "" then
         self.orderid2req[orderid] = req
@@ -72,13 +69,13 @@ function GiftMgr:giveCb(uid, touid, gid, gcount)
 end
 
 function GiftMgr:poll(player, idx)
-    if self.polled_players[player.uid] ~= nil or 
-            idx > 4 or idx < 1 then
-        return false
+    if self.polled_players[player.uid] ~= nil or idx > 4 or idx < 1 then
+        return "FL"
     end
     self.polled_players[player] = idx
     local p = self.powers[uid] or 1
     self.polls[idx] = self.polls[idx] + p
+    return "OK"
 end
 
 function GiftMgr:sortPower(to_sort, top_n)
@@ -104,3 +101,12 @@ function GiftMgr:vips()
            self:sortPower(self.camps[2], 2)
 end
 
+function GiftMgr:getPollResult()
+    local ret = 1
+    for i=2, 4 do
+        if self.poll[i] > ret then
+            ret = i
+        end
+    end
+    return self.options[ret]
+end

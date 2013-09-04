@@ -208,8 +208,9 @@ func RegisterLuaFunction(LS *LuaState) {
     // arg1: post_string    string
     // return: post result's raw string
     Lua_Post := func(L *lua.State) int {
-        post_string := L.ToString(1)
-        ret := LS.pm.Post(post_string)
+        url := L.ToString(1)
+        post_string := L.ToString(2)
+        ret := LS.pm.Post(url, post_string)
         L.PushString(ret)
         return 1
     }

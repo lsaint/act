@@ -138,7 +138,8 @@ end
 
 function GameRoom.OnPoll(self, player, req)
     print("OnPoll")
-    player:SendMsg("S2CPollRep", {ret = "OK"})
+    local r = self.giftmgr:poll(player, req.punish_id)
+    player:SendMsg("S2CPollRep", {ret = r})
 end
 
 function GameRoom.notifyPolls(self)
@@ -149,6 +150,7 @@ end
 function GameRoom.punishStart(self)
     print("punishStart")
     self:notifyStatus("Punish")
+    self:Broadcast("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
 end
 
 function GameRoom.OnPunishOver(self, player, req)
@@ -181,11 +183,9 @@ function GameRoom.OnRegGift(self, player, req)
     print("OnRegGift")
     local rep = {token = "", csn = req.csn}
     if self.giftmgr ~= nil then
-        rep.ret = self.giftmgr.regGiftOrder(player.uid, req)
+        rep.token = self.giftmgr:regGiftOrder(player.uid, req)
     end
     player:SendMsg("S2CRegGiftRep", rep)
-
-    self:OnGiftCb(player.uid, req.to_uid, req.gift, req.csn)
 end
 
 function GameRoom.OnGiftCb(self, from_uid, to_uid, gid, gcount, orderid)
