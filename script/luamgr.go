@@ -156,7 +156,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
                                         string(pack.GetBin())}
 
             case pack := <-httpCb.GiftCbChan:
-                if sid, err := strconv.ParseUint(pack.GetSid(), 10, 64); err != nil {
+                if sid, err := strconv.ParseUint(pack.GetSid(), 10, 64); err == nil {
                     state := this.GetLuaState(uint32(sid))
                     state.giftCbChan <- pack
                 }

@@ -191,8 +191,8 @@ end
 function GameRoom.OnGiftCb(self, from_uid, to_uid, gid, gcount, orderid)
     print("OnGiftCb")
     local req = GiftMgr.orderid2req[orderid]
-    self.giftmgr:giveCb(from_uid, to_uid, gid, gcount)
     if req == nil then return end
+    self.giftmgr:giveCb(from_uid, to_uid, gid, gcount, orderid)
     local giver, receiver = self.uid2player[from_uid], self.uid2player[to_uid]
     local gname, rname = ""
     if receiver ~= nil then rname = receiver.name end

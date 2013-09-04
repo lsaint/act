@@ -57,7 +57,7 @@ function GiftMgr:whichPresenter(uid)
     return nil
 end
 
-function GiftMgr:giveCb(uid, touid, gid, gcount)
+function GiftMgr:giveCb(uid, touid, gid, gcount, orderid)
     local p = GiftPower[gid] * gcount
     local cur_p  = self.powers[uid] or 0
     self.powers[uid] = p + cur_p
@@ -66,6 +66,7 @@ function GiftMgr:giveCb(uid, touid, gid, gcount)
     if o == nil then return end
     cur_p = self.camps[o].uid or 0
     self.camps[o][uid] = cur_p + p
+    self:finishGift(uid, orderid)
 end
 
 function GiftMgr:poll(player, idx)
@@ -104,9 +105,22 @@ end
 function GiftMgr:getPollResult()
     local ret = 1
     for i=2, 4 do
-        if self.poll[i] > ret then
+        if self.polls[i] > ret then
             ret = i
         end
     end
     return self.options[ret]
 end
+
+function GiftMgr:finishGift(uid, orderid)
+    local t = os.date("%Y%m%d%H%M%S")
+    local to_md5_args = { APPID, uid, orderid, SRVID, t, AUTH_KEY }
+    local to_md5 = string.format("%s%s%s%s%s%s", unpack(to_md5_args))
+    to_md5_args[#to_md5_args] = GoMd5(to_md5)
+    local post_string = string.format(
+       "appid=%s&uid=%s&orderid=%s&srvid=%s&time=%s&verify=%s", 
+        unpack(to_md5_args))
+    local ss = GoPost(FINISH_GIFT_URL, post_string)
+    print("finish order ret", ss)
+end
+
