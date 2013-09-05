@@ -229,7 +229,7 @@ function GameRoom.OnChat(self, player, req)
 end
 
 function  GameRoom.addScore(self)
-    print("addScore", self.presenter[2])
+    print("addScore")
     if self.round_info[1] == self.presenters[1] then
         self.scores[1] = self.scores[1] + BINGO_SCORE
     elseif self.round_info[2] == self.presenters[2] then

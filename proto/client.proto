@@ -167,7 +167,7 @@ message C2SRegGift {
 // 1007
 message S2CRegGiftRep {
     required string token = 1; // 空则失败
-    required uint32 sn = 2;   
+    required int64 sn = 2;   
     required string orderid = 3;
 }
 
