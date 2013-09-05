@@ -30,7 +30,7 @@ function update()
 end
 
 function giftCb(sid, uid, touid, giftid, giftcout, orderid)
-    print("glue", sid, uid, touid, giftid, giftcout, orderid)
+    --print("glue", sid, uid, touid, giftid, giftcout, orderid)
     watchdog.giftCb(sid, uid, touid, giftid, giftcout, orderid)
 end
 

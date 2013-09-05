@@ -171,7 +171,7 @@ function GameRoom.OnPunishOver(self, player, req)
 end
 
 function GameRoom.OnStopGame(self, player, req)
-    print("OnStopGame")
+    print("OnStopGame", player.uid, player.role)
     if player ~= nil and string.find(player.role, "Presenter") == nil then
         print("no auth to stop", player.uid)
         return
@@ -194,18 +194,18 @@ function GameRoom.OnRegGift(self, player, req)
 end
 
 function GameRoom.OnGiftCb(self, from_uid, to_uid, gid, gcount, orderid)
-    print("OnGiftCb")
+    print("GameRoom.OnGiftCb", from_uid, to_uid, gid, gcount, orderid)
     local req = GiftMgr.orderid2req[orderid]
     if req == nil then return end
     self.giftmgr:giveCb(from_uid, to_uid, gid, gcount, orderid)
     local giver, receiver = self.uid2player[from_uid], self.uid2player[to_uid]
     local gname, rname = ""
     if receiver ~= nil then rname = receiver.name end
-    if gname ~= nil then gname = giver.name end
+    if giver ~= nil then gname = giver.name end
     local bc = {
         giver = {name = gname},
         receiver = {name = rname},
-        gift = gift
+        gift = {id = gid, count = gcount},
     }
     self:Broadcast("S2CNotifyGift", bc)
     GiftMgr.orderid2req[orderid] = nil

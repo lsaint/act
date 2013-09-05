@@ -62,6 +62,7 @@ function GiftMgr:whichPresenter(uid)
 end
 
 function GiftMgr:giveCb(uid, touid, gid, gcount, orderid)
+    print("GiftMgr.giveCb")
     local p = GiftPower[gid] * gcount
     local cur_p  = self.powers[uid] or 0
     self.powers[uid] = p + cur_p

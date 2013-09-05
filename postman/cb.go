@@ -36,7 +36,7 @@ func (this *HttpCb) giftCb(w http.ResponseWriter, r *http.Request) {
         fmt.Fprint(w, err_ret)
         return
     }
-    fmt.Println("recv_post", string(recv_post))
+    //fmt.Println("recv_post", string(recv_post))
 
     ret_m, err1 := url.ParseQuery(string(recv_post))
     if err1 != nil || len(ret_m) == 0 {
