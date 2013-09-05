@@ -31,9 +31,9 @@ local function WatchDog()
         room[method](room, player, req)
     end
 
-    function self.giftCb(sid, uid, touid, gid, gcount, orderid)
+    function self.giftCb(op, sid, uid, touid, gid, gcount, orderid)
         local room = self.gainRoom(tonumber(sid))
-        room:OnGiftCb(tonumber(uid), tonumber(touid), tonumber(gid), tonumber(gcount), orderid)
+        room:OnGiftCb(tonumber(op), tonumber(uid), tonumber(touid), tonumber(gid), tonumber(gcount), orderid)
     end
 
     return self

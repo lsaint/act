@@ -171,7 +171,8 @@ function GameRoom.OnPunishOver(self, player, req)
 end
 
 function GameRoom.OnStopGame(self, player, req)
-    print("OnStopGame", player.uid, player.role)
+    print("OnStopGame")
+    pt(player) 
     if player ~= nil and string.find(player.role, "Presenter") == nil then
         print("no auth to stop", player.uid)
         return
@@ -193,10 +194,10 @@ function GameRoom.OnRegGift(self, player, req)
     player:SendMsg("S2CRegGiftRep", rep)
 end
 
-function GameRoom.OnGiftCb(self, from_uid, to_uid, gid, gcount, orderid)
-    print("GameRoom.OnGiftCb", from_uid, to_uid, gid, gcount, orderid)
+function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
+    print("GameRoom.OnGiftCb", op, from_uid, to_uid, gid, gcount, orderid)
     local req = GiftMgr.orderid2req[orderid]
-    if req == nil then return end
+    if req == nil or op ~= 1 then return end
     self.giftmgr:giveCb(from_uid, to_uid, gid, gcount, orderid)
     local giver, receiver = self.uid2player[from_uid], self.uid2player[to_uid]
     local gname, rname = ""

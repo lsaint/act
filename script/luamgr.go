@@ -118,13 +118,14 @@ func (this *LuaState) onUpdate() error {
 
 func (this *LuaState) onGiftCb(pack *proto.GiftCbPack) error {
     this.state.GetGlobal("giftCb") 
+    this.state.PushString(pack.GetOp())
     this.state.PushString(pack.GetSid())
     this.state.PushString(pack.GetFromUid())
     this.state.PushString(pack.GetToUid())
     this.state.PushString(pack.GetGiftId())
     this.state.PushString(pack.GetGiftCount())
     this.state.PushString(pack.GetOrderId())
-    return this.state.Call(6, 0)
+    return this.state.Call(7, 0)
 }
 
 ////

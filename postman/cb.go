@@ -46,6 +46,7 @@ func (this *HttpCb) giftCb(w http.ResponseWriter, r *http.Request) {
 
     if len(ret_m) == 11 {
         pack := &proto.GiftCbPack{
+                    Op: pb.String(ret_m["op_ret"][0]),
                     Sid: pb.String(ret_m["chn"][0]),
                     FromUid: pb.String(ret_m["fromuid"][0]),
                     ToUid: pb.String(ret_m["touid"][0]),

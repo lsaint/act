@@ -24,4 +24,5 @@ message GiftCbPack {
     required  string GiftId      = 4;
     required  string GiftCount   = 5;
     required  string OrderId     = 6;
+    required  string Op          = 7;
 }
