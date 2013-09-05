@@ -144,6 +144,9 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     this.sendChan, this.recvChan = out, in
     httpCb := postman.NewHttpCb()
     go httpCb.Start()
+    for i:=0; i<MAX_STATE; i++ {
+        this.hash2state[uint32(i)] = NewLuaState(this.sendChan)
+    }
     for {
         select {
             case pack := <-this.recvChan:
