@@ -172,7 +172,7 @@ end
 
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
-    pt(player) 
+    if player ~= nil then print(player.uid, player.role) end
     if player ~= nil and string.find(player.role, "Presenter") == nil then
         print("no auth to stop", player.uid)
         return
@@ -180,7 +180,8 @@ function GameRoom.OnStopGame(self, player, req)
     self:notifyStatus("Ready")
 
     for i, v in ipairs(self.presenters) do
-        self.uid2player[v.uid].role = "Attendee"
+        local p = self.uid2player[v.uid]
+        if p then p.role = "Attendee" end
     end
     self:init()
 end
@@ -200,12 +201,18 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     if req == nil or op ~= 1 then return end
     self.giftmgr:giveCb(from_uid, to_uid, gid, gcount, orderid)
     local giver, receiver = self.uid2player[from_uid], self.uid2player[to_uid]
-    local gname, rname = ""
-    if receiver ~= nil then rname = receiver.name end
-    if giver ~= nil then gname = giver.name end
+    local gname, rname, guid, ruid = "", "", 0, 0
+    if receiver then 
+        rname = receiver.name 
+        ruid = receiver.uid
+    end
+    if giver then 
+        gname = giver.name 
+        guid = giver.uid
+    end
     local bc = {
-        giver = {name = gname},
-        receiver = {name = rname},
+        giver = {name = gname, uid = guid},
+        receiver = {name = rname, uid = ruid},
         gift = {id = gid, count = gcount},
     }
     self:Broadcast("S2CNotifyGift", bc)
