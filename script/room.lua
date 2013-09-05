@@ -248,10 +248,9 @@ function GameRoom.OnLogout(self, player, req)
     if player == nil then return end
     print("OnLogout", player.uid, player.role)
     if string.find(player.role, "Presenter") ~= nil and 
-        self.status ~= "Ready" then
+            self.status ~= "Ready" then
         self:OnStopGame()
-    else
-        self.uid2player[player.uid] = nil
     end
+    self.uid2player[player.uid] = nil
 end
 

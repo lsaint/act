@@ -64,7 +64,6 @@ function GiftMgr:giveCb(uid, touid, gid, gcount, orderid)
     self:finishGift(uid, orderid)
 
     local o = self:whichPresenter(touid)
-    print("o==nil return")
     if o == nil then return end
     cur_p = self.camps[o].uid or 0
     self.camps[o][uid] = cur_p + p
