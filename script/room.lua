@@ -186,9 +186,9 @@ end
 
 function GameRoom.OnRegGift(self, player, req)
     print("OnRegGift")
-    local rep = {token = "", csn = req.csn}
+    local rep = {token = ""}
     if self.giftmgr ~= nil then
-        rep.token = self.giftmgr:regGiftOrder(player.uid, req)
+        rep.token, rep.sn, rep.orderid = self.giftmgr:regGiftOrder(player.uid, req)
     end
     player:SendMsg("S2CRegGiftRep", rep)
 end

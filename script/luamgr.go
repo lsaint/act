@@ -4,6 +4,7 @@ import (
     "io"
     "fmt"
     "time"
+    "sync/atomic"
     "encoding/binary"
     "crypto/md5"
     "strconv"
@@ -15,6 +16,7 @@ import (
     "act/postman"
 )
 
+var SN int64
 const (
     MAX_STATE = 2
     PROTO_INVOKE = iota
@@ -228,9 +230,16 @@ func RegisterLuaFunction(LS *LuaState) {
         return 1
     }
 
+    // return: not repeated sn
+    Lua_GetSn := func(L *lua.State) int {
+        L.PushInteger(atomic.AddInt64(&SN, 1) + int64(time.Now().Unix()))
+        return 1
+    }
+
     LS.state.Register("GoSendMsg", Lua_SendMsg)
     LS.state.Register("GoPost", Lua_Post)
     LS.state.Register("GoMd5", Lua_Md5)
+    LS.state.Register("GoGetSn", Lua_GetSn)
 }
 
 

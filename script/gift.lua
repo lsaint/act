@@ -10,6 +10,7 @@ local GiftPower = {
     [1014] = 80,
     [1015] = 80,
 }
+local SN = 0
 
 
 GiftMgr = {}
@@ -28,11 +29,11 @@ function GiftMgr:new(sid, presenters)
     return ins
 end
 
--- req -- [to_uid, gift.id, gift.count, csn]
+-- req -- [to_uid, gift.id, gift.count]
 function GiftMgr:regGiftOrder(from_uid, req)
-    local t = os.date("%Y%m%d%H%M%S")
+    local t, sn = os.date("%Y%m%d%H%M%S"), GoGetSn()
     local to_md5_args = { APPID, from_uid, req.to_uid, req.gift.id,
-                          req.gift.count, req.csn, self.sid, SRVID, 
+                          req.gift.count, sn, self.sid, SRVID, 
                           t, AUTH_KEY }
     local to_md5 = string.format("%s%s%s%s%s%s%s%s%s%s", unpack(to_md5_args))
     to_md5_args[10] = GoMd5(to_md5)
@@ -44,7 +45,7 @@ function GiftMgr:regGiftOrder(from_uid, req)
     if orderid ~= "" then
         self.orderid2req[orderid] = req
     end
-    return token
+    return token, sn, orderid
 end
 
 function GiftMgr:checkPostRet(ss)
