@@ -62,6 +62,7 @@ function GameRoom.OnStartGame(self, player, req)
     else
         return
     end
+    self.uid2player[player.uid].role = player.role
 
     local rep = {ret = "WAIT_OTHER"}
     if #self.presenters == 2 then    
@@ -131,7 +132,7 @@ function GameRoom.pollStart(self)
     local bc = {options = RandomPunish(), loser = self.presenters[1].user}
     self.giftmgr.options = bc.options
     self:Broadcast("S2CNotfiyPunishOptions", bc)
-    self:Broadcast("S2CNotifyTop3Giver", self.giftmgr:top3())
+    self:Broadcast("S2CNotifyTop3Giver", {top3 = self.giftmgr:top3()})
     self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
     self.timer:settimer(BC_POLLS_INTERVAL, POLL_TIME/2+1, self.notifyPolls, self)
 end
@@ -176,6 +177,10 @@ function GameRoom.OnStopGame(self, player, req)
         return
     end
     self:notifyStatus("Ready")
+
+    for i, v in ipairs(self.presenters) do
+        self.uid2player[v.uid].role = "Attendee"
+    end
     self:init()
 end
 
