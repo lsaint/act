@@ -175,6 +175,12 @@ message S2CRegGiftRep {
     required string orderid = 3;
 }
 
+// 1003 客户端SDK发送赠送信息到礼物系统后的通知
+message S2CGiftRep {
+    required int32 op = 1;
+    required string orderid = 2;
+}
+
 // 2007
 message S2CNotifyGift {
     required UserData giver = 1;

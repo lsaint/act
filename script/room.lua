@@ -197,10 +197,23 @@ end
 
 function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     print("GameRoom.OnGiftCb", op, from_uid, to_uid, gid, gcount, orderid)
-    local req = GiftMgr.orderid2req[orderid]
-    if req == nil or op ~= 1 then return end
-    self.giftmgr:giveCb(from_uid, to_uid, gid, gcount, orderid)
-    local giver, receiver = self.uid2player[from_uid], self.uid2player[to_uid]
+    if op == 1 then 
+        GiftMgr.finishGift(uid, orderid)
+    end
+
+    local req, giver = GiftMgr.orderid2req[orderid], self.uid2player[from_uid]
+    if giver then
+        giver:SendMsg("S2CGiftRep", {op = op, orderid = orderid})
+    end
+
+    if not req then 
+        -- not register, nothing to do with power
+        return 
+    end
+    self.giftmgr:increasePower(from_uid, to_uid, gid, gcount, orderid)
+    GiftMgr.orderid2req[orderid] = nil
+
+    local receiver =  self.uid2player[to_uid]
     local gname, rname, guid, ruid = "", "", 0, 0
     if receiver then 
         rname = receiver.name 
@@ -216,7 +229,6 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
         gift = {id = gid, count = gcount},
     }
     self:Broadcast("S2CNotifyGift", bc)
-    GiftMgr.orderid2req[orderid] = nil
 end
 
 function GameRoom.OnChat(self, player, req)

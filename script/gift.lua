@@ -62,12 +62,11 @@ function GiftMgr:whichPresenter(uid)
     return nil
 end
 
-function GiftMgr:giveCb(uid, touid, gid, gcount, orderid)
-    print("GiftMgr.giveCb")
+function GiftMgr:increasePower(uid, touid, gid, gcount, orderid)
+    print("increasePower")
     local p = GiftPower[gid] * gcount
     local cur_p  = self.powers[uid] or 0
     self.powers[uid] = p + cur_p
-    self:finishGift(uid, orderid)
 
     local o = self:whichPresenter(touid)
     if o == nil then return end
@@ -118,7 +117,8 @@ function GiftMgr:getPollResult()
     return self.options[ret]
 end
 
-function GiftMgr:finishGift(uid, orderid)
+-- cls methond
+function GiftMgr.finishGift(uid, orderid)
     print("finishGift", uid, orderid)
     local t = os.date("%Y%m%d%H%M%S")
     local to_md5_args = { APPID, uid, orderid, SRVID, t, AUTH_KEY }
