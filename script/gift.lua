@@ -22,7 +22,7 @@ function GiftMgr:new(sid, presenters)
     ins.sid = sid
     ins.presenters = presenters
     ins.powers = {} -- {uid=power}
-    ins.camps = {{}, {}} -- {camp_a, camp_b}
+    ins.camps = {{}, {}} -- {camp_a_powers, camp_b_powers}
     ins.options = {}
     ins.polls = {0, 0, 0, 0}
     ins.polled_players = {}
@@ -93,7 +93,7 @@ function GiftMgr:sortPower(to_sort, top_n)
     table.sort(sorted, function(a, b) return a[2] > b[2] end)
     local ret = {}
     for i, v in ipairs(sorted) do
-        table.insert(ret, unpack(v))
+        table.insert(ret, {user={uid=v[1]}, s=v[2]})
         if i >= top_n then break end
     end
     return ret

@@ -46,6 +46,10 @@ message GameGift {
     required uint32 count = 2;
 }
 
+message Ranker {
+    required UserData user = 1;
+    required uint32 s = 2;
+}
 
 // 0
 message C2SLogout {
@@ -180,13 +184,13 @@ message S2CNotifyGift {
 
 // 2010
 message S2CNotifyTop3Giver {
-    repeated uint32 top3 = 1; 
+    repeated Ranker top3 = 1; 
 }
 
 // 2011
 message S2CNotifyVips {
-    repeated uint32 a_vip = 1;
-    repeated uint32 b_vip = 2;
+    repeated Ranker a_vip = 1;
+    repeated Ranker b_vip = 2;
 }
     
 
