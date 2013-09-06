@@ -21,14 +21,14 @@ enum GameStatus {
 }
 
 // em
-message UserData
-{
+message UserData {
     optional uint32 uid = 1;    
     optional string name = 2;  
     optional uint32 imid = 3; 
     optional int32 sex = 4;  
     optional int32 privilege = 5;   // 马甲
     optional GameRole role = 6;
+    optional uint32 power = 7; //礼物加权值
 }
 
 message Punishment {

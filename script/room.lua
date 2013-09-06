@@ -29,10 +29,12 @@ function GameRoom.init(self)
     self.giftmgr =  nil
 end
 
+--self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
 function GameRoom.SendMsg(self, pname, msg, uids)
     SendMsg(pname, msg, uids, self.sid)
 end
 
+--self:Broadcast("S2CLoginRep", rep) -- all
 function GameRoom.Broadcast(self, pname, msg)
     SendMsg(pname, msg, {}, self.sid)
 end
@@ -49,9 +51,23 @@ function GameRoom.OnLogin(self, player, req)
         status = self.status,
         user = { },
     }
-    --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
-    --self:Broadcast("S2CLoginRep", rep) -- all
-    player:SendMsg("S2CLoginRep", rep)  -- single
+    local p = 0
+    if self.giftmgr then 
+        p = self.giftmgr.powers[player.uid] or 0
+    end
+    rep.user.power = p
+    player:SendMsg("S2CLoginRep", rep)
+
+    if self.status == "Poll" then
+        player:SendMsg("S2CNotfiyPunishOptions", 
+            {options = self.giftmgr.options, loser = self:getLoser().user})
+        player:SendMsg("S2CNotifyTop3Giver", 
+            {top3 = self.giftmgr:top3()})
+    elseif self.status == "Punish" then
+        player:SendMsg("S2CNotfiyPunishOptions", 
+            {options = self.giftmgr.options, loser = self:getLoser().user})
+        player:SendMsg("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
+    end
 end
 
 function GameRoom.OnStartGame(self, player, req)
@@ -198,7 +214,7 @@ end
 function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     print("GameRoom.OnGiftCb", op, from_uid, to_uid, gid, gcount, orderid)
     if op == 1 then 
-        GiftMgr.finishGift(uid, orderid)
+        GiftMgr.finishGift(from_uid, orderid)
     end
 
     local req, giver = GiftMgr.orderid2req[orderid], self.uid2player[from_uid]
@@ -256,6 +272,16 @@ function  GameRoom.addScore(self)
         self.scores[2] = self.scores[2] + BINGO_SCORE
     end
     print(table.concat(self.scores, " : "))
+end
+
+function GameRoom.getLoser()
+    local idx = 1
+    if self.scores[2] > self.scores[1] then
+        idx = 2
+    elseif self.scores[2] == self.scores[1] then
+        idx = math.random(2)
+    end
+    return self.presenters[idx]
 end
 
 function GameRoom.notifyVips(self)
