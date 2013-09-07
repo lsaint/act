@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json, time 
-from gevent import pywsgi, wsgi
+from gevent import wsgi
 
 from bson.objectid import ObjectId
 
@@ -23,7 +23,7 @@ def handle(environ, start_response):
     ret = "{}"
     if type(jn) == dict:
         ret = dispatch(jn)
-    start_response('200 OK', [('Content-Type', 'text/html')])
+    start_response('200 OK', [('Content-Type', 'application/json')])
     return ret
 
 

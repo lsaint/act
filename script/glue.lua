@@ -1,7 +1,7 @@
-package.path = "/Users/lsaint/Documents/SRC/pbc/binding/lua/?.lua;" .. package.path
-package.path = "/Users/lsaint/go/src/act/script/?.lua;" .. package.path
-package.path = "/Users/lsaint/go/src/act/db/?.lua;" .. package.path
-package.cpath = "/Users/lsaint/Documents/SRC/pbc/binding/lua/?.so;" .. package.cpath
+package.path = "./script/?.lua;" .. package.path
+package.path = "./db/?.lua;" .. package.path
+package.path = "./script/lib/?.lua;" .. package.path
+package.cpath = "./script/lib/?.so;" .. package.cpath
 
 protobuf = require "protobuf"
 parser = require "parser"
@@ -9,11 +9,10 @@ parser = require "parser"
 watchdog = require "watchdog"
 
 require "timer"
-require "json"
 require "uri"
 require "db"
 
-parser.register("client.proto", "/home/lsaint/go/src/act/proto/")
+parser.register("client.proto", "./proto/")
 
 function dispatch(sid, uid, pname, data)
     watchdog.dispatch(sid, uid, pname, data)
