@@ -79,7 +79,7 @@ function GiftMgr:poll(player, idx)
         return "FL"
     end
     self.polled_players[player] = idx
-    local p = self.powers[uid] or 1
+    local p = self.powers[player.uid] or 1
     self.polls[idx] = self.polls[idx] + p
     return "OK"
 end
