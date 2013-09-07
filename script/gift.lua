@@ -78,7 +78,7 @@ function GiftMgr:poll(player, idx)
     if self.polled_players[player.uid] ~= nil or idx > 4 or idx < 1 then
         return "FL"
     end
-    self.polled_players[player] = idx
+    self.polled_players[player.uid] = idx
     local p = self.powers[player.uid] or 1
     self.polls[idx] = self.polls[idx] + p
     return "OK"
