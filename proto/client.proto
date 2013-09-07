@@ -32,12 +32,12 @@ message UserData {
 }
 
 message Punishment {
-   required uint32 id = 1;
+   optional string _id = 1;
    required string desc = 2;
 }
 
 message Motion {
-    required uint32 id = 1;
+    optional string _id = 1;
     required string desc = 2;
 }
 

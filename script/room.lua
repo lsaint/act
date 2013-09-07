@@ -1,10 +1,9 @@
 
 require "utility"
-require "motion"
 require "const"
-require "punish"
 require "guess"
 require "gift"
+require "db"
 
 GameRoom = {}
 GameRoom.__index = GameRoom
@@ -131,7 +130,7 @@ function GameRoom.doRound(self, presenter, r)
     local bc = {
         presenter = {uid = presenter.uid},
         round = r,
-        mot = {id = m.id, desc = m.desc },
+        mot = {desc = m.desc},
     }   
     self:Broadcast("S2CNotifyRoundStart", bc)
 end

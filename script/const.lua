@@ -1,6 +1,7 @@
 
 APPID = 114269
 SRVID = 1
+DB_URL = "http://localhost:8081/"
 GIFT_URL = "http://111.178.146.46:8901/regGiftOrder"
 FINISH_GIFT_URL = "http://111.178.146.46:8901/finishOrder"
 AUTH_KEY = "679b665c378e4102c341df6bc9650170390649d3"

@@ -1,5 +1,6 @@
 package.path = "/Users/lsaint/Documents/SRC/pbc/binding/lua/?.lua;" .. package.path
 package.path = "/Users/lsaint/go/src/act/script/?.lua;" .. package.path
+package.path = "/Users/lsaint/go/src/act/db/?.lua;" .. package.path
 package.cpath = "/Users/lsaint/Documents/SRC/pbc/binding/lua/?.so;" .. package.cpath
 
 protobuf = require "protobuf"
@@ -10,6 +11,7 @@ watchdog = require "watchdog"
 require "timer"
 require "json"
 require "uri"
+require "db"
 
 parser.register("client.proto", "/home/lsaint/go/src/act/proto/")
 
