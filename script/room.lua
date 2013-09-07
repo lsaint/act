@@ -222,8 +222,8 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
         giver:SendMsg("S2CGiftRep", {op = op, orderid = orderid})
     end
 
-    if not req then 
-        -- not register, nothing to do with power
+    if not req or op ~= 1 then 
+        -- not register or pay sucess,  nothing to do with power
         return 
     end
     self.giftmgr:increasePower(from_uid, to_uid, gid, gcount, orderid)
@@ -274,7 +274,7 @@ function  GameRoom.addScore(self)
     print(table.concat(self.scores, " : "))
 end
 
-function GameRoom.getLoser()
+function GameRoom.getLoser(self)
     local idx = 1
     if self.scores[2] > self.scores[1] then
         idx = 2
