@@ -15,6 +15,9 @@ class JSONEncoder(json.JSONEncoder):
 
 
 def handle(environ, start_response):
+    if environ['REQUEST_METHOD'] != 'POST':
+        start_response('404 Not Found', [('Content-Type', 'text/html')])
+        return ["L'"]
     content_length = int(environ["CONTENT_LENGTH"])
     # fetch the request body
     request = environ["wsgi.input"].read(content_length)
