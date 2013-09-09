@@ -35,8 +35,8 @@ func main() {
     //    log.Println(http.ListenAndServe("localhost:6061", nil))
     //}()
 
-    authServer := network.AuthServer{}
-    go authServer.Start()
+    //authServer := network.AuthServer{}
+    //go authServer.Start()
     
     luaMgr := script.NewLuaMgr()
 

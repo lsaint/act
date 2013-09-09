@@ -23,3 +23,7 @@ function Player:init()
     self.role           =          self.user.role       
 end
 
+function Player:isPresenter()
+    return string.find(self.role, "Presenter") ~= nil
+end
+

@@ -17,7 +17,7 @@ function Guess:guess(player, answer)
         self.bingo_players[player.uid] = true
     end
     if ret then
-        answer = "***"
+        answer = ""
     end
     return ret, first_bingo, answer
 end

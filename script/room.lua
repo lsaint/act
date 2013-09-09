@@ -77,7 +77,7 @@ function GameRoom.OnStartGame(self, player, req)
     else
         return
     end
-    self.uid2player[player.uid].role = player.role
+    self.uid2player[player.uid].role = req.presenter.role
 
     local rep = {ret = "WAIT_OTHER"}
     if #self.presenters == 2 then    
@@ -100,19 +100,16 @@ end
 function GameRoom.roundStart(self)
     print("RoundStart")
     local a, b = self.presenters[1],  self.presenters[2]
-    local ar, br = 1, 1
 
-    self:doRound(a, ar)
-    while ar < ROUND_COUNT do
-        ar = ar + 1
-        self.timer:settimer(ROUND_TIME * ar, 1, self.doRound, self, a, ar)
+    self:doRound(a, 1)
+    for ar = 2, ROUND_COUNT do
+        self.timer:settimer(ROUND_TIME * (ar-1), 1, self.doRound, self, a, ar)
     end
 
     local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
-    while br < ROUND_COUNT do 
+    for br = 1, ROUND_COUNT do
         local t = a_total_time + ROUND_TIME * (br - 1)
         self.timer:settimer(t, 1, self.doRound, self, b, br)
-        br = br + 1
     end
 
     local round_end_time = a_total_time + ROUND_TIME * (ROUND_COUNT - 1) + 1
@@ -123,7 +120,7 @@ function GameRoom.roundStart(self)
 end
 
 function GameRoom.doRound(self, presenter, r)
-    print("DoRound", r)
+    print("DoRound", r, os.time())
     self.round_info = {presenter, r}
     local m = RandomMotion()
     self.guess = Guess:new(m)
@@ -136,7 +133,7 @@ function GameRoom.doRound(self, presenter, r)
 end
 
 function GameRoom.notifyScore(self)
-    print("notifyScore")
+    print("notifyScore", self.scores[1], self.scores[2])
     local bc = {scores = self.scores}
     self:Broadcast("S2CNotifyScores", bc)
 end
@@ -144,7 +141,7 @@ end
 function GameRoom.pollStart(self)
     print("pollStart")
     self:notifyStatus("Poll")
-    local bc = {options = RandomPunish(), loser = self.presenters[1].user}
+    local bc = {options = RandomPunish(), loser = self.getLoser().user}
     self.giftmgr.options = bc.options
     self:Broadcast("S2CNotfiyPunishOptions", bc)
     self:Broadcast("S2CNotifyTop3Giver", {top3 = self.giftmgr:top3()})
@@ -187,8 +184,8 @@ end
 
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
-    if player ~= nil then print(player.uid, player.role) end
-    if player ~= nil and string.find(player.role, "Presenter") == nil then
+    if player then print(player.uid, player.role) end
+    if player and not player:isPresenter() then
         print("no auth to stop", player.uid)
         return
     end
@@ -204,7 +201,7 @@ end
 function GameRoom.OnRegGift(self, player, req)
     print("OnRegGift")
     local rep = {token = ""}
-    if self.giftmgr ~= nil then
+    if self.giftmgr then
         rep.token, rep.sn, rep.orderid = self.giftmgr:regGiftOrder(player.uid, req)
     end
     player:SendMsg("S2CRegGiftRep", rep)
@@ -222,7 +219,7 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     end
 
     if not req or op ~= 1 then 
-        -- not register or pay sucess,  nothing to do with power
+        -- not register or pay unsucess,  nothing to do with power
         return 
     end
     self.giftmgr:increasePower(from_uid, to_uid, gid, gcount, orderid)
@@ -258,7 +255,11 @@ function GameRoom.OnChat(self, player, req)
         local ret, isfirst, answer = self.guess:guess(player, req.msg)
         bc.msg = answer
         bc.correct = ret
-        if isfirst then self:addScore() end
+        if isfirst then 
+            self:addScore() 
+        elseif ret then
+            return
+        end
     end
     self:Broadcast("S2CNotifyChat", bc)
 end
@@ -290,10 +291,9 @@ function GameRoom.notifyVips(self)
 end
 
 function GameRoom.OnLogout(self, player, req)
-    if player == nil then return end
+    if not player then return end
     print("OnLogout", player.uid, player.role)
-    if string.find(player.role, "Presenter") ~= nil and 
-            self.status ~= "Ready" then
+    if player:isPresenter() and self.status ~= "Ready" then
         self:OnStopGame()
     end
     self.uid2player[player.uid] = nil
