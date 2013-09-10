@@ -76,12 +76,13 @@ function GiftMgr:increasePower(uid, touid, gid, gcount)
 end
 
 function GiftMgr:poll(player, idx)
-    if self.polled_players[player.uid] ~= nil or idx > 4 or idx < 1 then
+    if self.polled_players[player.uid] or idx > 4 or idx < 1 then
         return "FL"
     end
     self.polled_players[player.uid] = idx
     local p = self.powers[player.uid] or 1
     self.polls[idx] = self.polls[idx] + p
+    self.powers[player.uid] = 0
     return "OK"
 end
 

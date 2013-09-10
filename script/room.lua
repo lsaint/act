@@ -137,7 +137,7 @@ end
 function GameRoom.pollStart(self)
     print("pollStart")
     self:notifyStatus("Poll")
-    local bc = {options = RandomPunish(), loser = self.getLoser().user}
+    local bc = {options = RandomPunish(), loser = self:getLoser().user}
     self.giftmgr.options = bc.options
     self:Broadcast("S2CNotfiyPunishOptions", bc)
     self:Broadcast("S2CNotifyTop3Giver", {top3 = self.giftmgr:top3()})
@@ -216,7 +216,7 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
         -- not register or pay unsucess,  nothing to do with power
         return 
     end
-    if self.status != "Ready" then
+    if self.status ~= "Ready" then
         self.giftmgr:increasePower(from_uid, to_uid, gid, gcount)
     end
     GiftMgr.orderid2req[orderid] = nil
@@ -264,7 +264,7 @@ function  GameRoom.addScore(self)
     print("addScore")
     if self.round_info[1] == self.presenters[1] then
         self.scores[1] = self.scores[1] + BINGO_SCORE
-    elseif self.round_info[2] == self.presenters[2] then
+    elseif self.round_info[1] == self.presenters[2] then
         self.scores[2] = self.scores[2] + BINGO_SCORE
     end
     print(table.concat(self.scores, " : "))
