@@ -111,9 +111,15 @@ end
 
 function GiftMgr:getPollResult()
     local ret = 1
-    for i=2, 4 do
-        if self.polls[i] > ret then
-            ret = i
+    if self.polls[1] == self.polls[2] and
+            self.polls[2] == self.polls[3] and
+            self.polls[3] == self.polls[4] then
+        ret = 4
+    else
+        for i=2, 4 do
+            if self.polls[i] > ret then
+                ret = i
+            end
         end
     end
     return self.options[ret]
