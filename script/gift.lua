@@ -31,6 +31,7 @@ end
 
 -- req -- [to_uid, gift.id, gift.count]
 function GiftMgr:regGiftOrder(from_uid, req)
+    if req.to_uid == 0 then return "", 0, "" end
     local t, sn = os.date("%Y%m%d%H%M%S"), GoGetSn()
     local to_md5_args = { APPID, from_uid, req.to_uid, req.gift.id,
                           req.gift.count, sn, self.sid, SRVID, 
@@ -62,14 +63,14 @@ function GiftMgr:whichPresenter(uid)
     return nil
 end
 
-function GiftMgr:increasePower(uid, touid, gid, gcount, orderid)
+function GiftMgr:increasePower(uid, touid, gid, gcount)
     print("increasePower")
     local p = GiftPower[gid] * gcount
     local cur_p  = self.powers[uid] or 0
     self.powers[uid] = p + cur_p
 
     local o = self:whichPresenter(touid)
-    if o == nil then return end
+    if not o then return end
     cur_p = self.camps[o].uid or 0
     self.camps[o][uid] = cur_p + p
 end

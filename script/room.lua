@@ -25,7 +25,7 @@ function GameRoom.init(self)
     self.round_info = {} -- {presenter, round_number}
     self.timer = Timer:new(self.sid)
     self.guess = nil
-    self.giftmgr =  nil
+    self.giftmgr = GiftMgr:new(self.sid, self.presenters)
 end
 
 --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
@@ -50,11 +50,7 @@ function GameRoom.OnLogin(self, player, req)
         status = self.status,
         user = { },
     }
-    local p = 0
-    if self.giftmgr then 
-        p = self.giftmgr.powers[player.uid] or 0
-    end
-    rep.user.power = p
+    rep.user.power = self.giftmgr.powers[player.uid] or 0
     player:SendMsg("S2CLoginRep", rep)
 
     if self.status == "Poll" then
@@ -86,7 +82,7 @@ function GameRoom.OnStartGame(self, player, req)
         self.timer:settimer(5, 1, self.roundStart, self)
         local bc_vip_count = (TOTAL_ROUND_TIME + POLL_TIME) / BC_VIP_INTERVAL + 1
         self.timer:settimer(BC_VIP_INTERVAL, bc_vip_count, self.notifyVips, self)
-        self.giftmgr = GiftMgr:new(self.sid, self.presenters)
+        self.giftmgr.presenters = self.presenters
         rep.ret = "OK"
     else 
         print("waiting other")
@@ -201,9 +197,7 @@ end
 function GameRoom.OnRegGift(self, player, req)
     print("OnRegGift")
     local rep = {token = ""}
-    if self.giftmgr then
-        rep.token, rep.sn, rep.orderid = self.giftmgr:regGiftOrder(player.uid, req)
-    end
+    rep.token, rep.sn, rep.orderid = self.giftmgr:regGiftOrder(player.uid, req)
     player:SendMsg("S2CRegGiftRep", rep)
 end
 
@@ -222,7 +216,9 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
         -- not register or pay unsucess,  nothing to do with power
         return 
     end
-    self.giftmgr:increasePower(from_uid, to_uid, gid, gcount, orderid)
+    if self.status != "Ready" then
+        self.giftmgr:increasePower(from_uid, to_uid, gid, gcount)
+    end
     GiftMgr.orderid2req[orderid] = nil
 
     local receiver =  self.uid2player[to_uid]
