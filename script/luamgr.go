@@ -233,7 +233,9 @@ func RegisterLuaFunction(LS *LuaState) {
 
     // return: not repeated sn
     Lua_GetSn := func(L *lua.State) int {
-        L.PushInteger(atomic.AddInt64(&SN, 1) + int64(time.Now().Unix()))
+        L.GetGlobal("SRVID")
+        offset := int64(L.ToInteger(-1) * 10000000000)
+        L.PushInteger(atomic.AddInt64(&SN, 1) + int64(time.Now().Unix()) + offset)
         return 1
     }
 
