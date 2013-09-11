@@ -251,10 +251,12 @@ function GameRoom.OnChat(self, player, req)
         local ret, isfirst, answer = self.guess:guess(player, req.msg)
         bc.msg = answer
         bc.correct = ret
-        if isfirst then 
-            self:addScore() 
-        elseif ret then
-            return
+        if ret then
+            if isfirst then
+                self:addScore()
+            else
+                return
+            end
         end
     end
     self:Broadcast("S2CNotifyChat", bc)
