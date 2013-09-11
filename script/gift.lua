@@ -110,19 +110,19 @@ function GiftMgr:vips()
 end
 
 function GiftMgr:getPollResult()
-    local ret = 1
     if self.polls[1] == self.polls[2] and
             self.polls[2] == self.polls[3] and
             self.polls[3] == self.polls[4] then
-        ret = 4
-    else
-        for i=2, 4 do
-            if self.polls[i] > ret then
-                ret = i
-            end
+        return self.options[4]
+    end
+
+    local idx, poll = 1, self.polls[1]
+    for i=2, 4 do
+        if self.polls[i] > poll then
+            idx, poll = i, self.polls[i]
         end
     end
-    return self.options[ret]
+    return self.options[idx]
 end
 
 -- cls methond
