@@ -21,9 +21,14 @@ local function WatchDog()
         local proto_name = string.format("%s%s", "proto.C2S", pname)
         local req = protobuf.decode(proto_name, data)
         local player = room.uid2player[uid]
-        if player == nil and pname == "Login" then
-            player = Player:new(req.user)
-            room.uid2player[uid] = player
+        if not player then 
+            if pname == "Login" then
+                player = Player:new(req.user)
+                room.uid2player[uid] = player
+            else
+                print("not login yet", uid, pname)
+                return
+            end
         end
         local method = string.format("On%s", pname)
         print(string.format("%s%s%s", "---------", pname, "---------"))
