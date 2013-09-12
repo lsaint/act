@@ -274,7 +274,7 @@ end
 
 function GameRoom.getLoser(self)
     local idx = 1
-    if self.scores[2] > self.scores[1] then
+    if self.scores[2] < self.scores[1] then
         idx = 2
     elseif self.scores[2] == self.scores[1] then
         idx = math.random(2)
