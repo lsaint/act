@@ -247,7 +247,7 @@ function GameRoom.OnChat(self, player, req)
             name = player.name,
         }
     }
-    if self.status == "Round" then
+    if self.status == "Round" and self.guess then
         local ret, isfirst, answer = self.guess:guess(player, req.msg)
         bc.msg = answer
         bc.correct = ret
