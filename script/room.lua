@@ -291,8 +291,12 @@ end
 function GameRoom.OnLogout(self, player, req)
     if not player then return end
     print("OnLogout", player.uid, player.role)
-    if player:isPresenter() and self.status ~= "Ready" then
-        self:OnStopGame()
+    if player:isPresenter() then 
+        if self.status ~= "Ready" then
+            self:OnStopGame()
+        else
+            self.presenters = {}
+        end
     end
     self.uid2player[player.uid] = nil
 end
