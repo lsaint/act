@@ -108,7 +108,7 @@ function GameRoom.roundStart(self)
         self.timer:settimer(t, 1, self.doRound, self, b, br)
     end
 
-    local round_end_time = a_total_time + ROUND_TIME * (ROUND_COUNT - 1) + 1
+    local round_end_time = a_total_time + ROUND_TIME * ROUND_COUNT + 1
     self.timer:settimer(round_end_time, 1, self.pollStart, self)
 
     local notify_score_count = round_end_time / BC_SCORE_INTERVAL + 1
