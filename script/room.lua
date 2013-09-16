@@ -50,7 +50,7 @@ function GameRoom.OnLogin(self, player, req)
         status = self.status,
         user = { },
     }
-    rep.user.power = self.giftmgr.powers[player.uid] or 0
+    rep.user.power = self.giftmgr:getPower(player.uid)
     player:SendMsg("S2CLoginRep", rep)
 
     if self.status == "Poll" then

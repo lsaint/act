@@ -76,6 +76,13 @@ function GiftMgr:increasePower(uid, touid, gid, gcount)
     self.camps[o][uid] = cur_p + p
 end
 
+function GiftMgr:getPower(uid)
+    if self.polled_players[uid] then
+        return 0 
+    end
+    return self.powers[uid] or 1
+end
+
 function GiftMgr:poll(player, idx)
     if self.polled_players[player.uid] or idx > 4 or idx < 1 then
         return "FL"
