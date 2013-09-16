@@ -132,6 +132,11 @@ message S2CNotifyPolls {
     repeated uint32 polls = 1;
 }
 
+// 2013
+message S2CNotifyPowerPoll {
+    required UserData user = 1;
+}
+
 // 2004 惩罚开始
 message S2CNotifyPunish {
     required Punishment punish = 1;

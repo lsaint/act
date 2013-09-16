@@ -20,3 +20,4 @@ URI["proto.S2CNotifyPunishOver"] =      2009
 URI["proto.S2CNotifyTop3Giver"] =       2010
 URI["proto.S2CNotifyVips"] =            2011
 URI["proto.S2CNotifyChat"] =            2012
+URI["proto.S2CNotifyPowerPoll"] =       2013
