@@ -67,12 +67,12 @@ function GiftMgr:increasePower(uid, touid, gid, gcount)
     print("increasePower")
     if self.polled_players[uid] then return end
     local p = GiftPower[gid] * gcount
-    local cur_p  = self.powers[uid] or 0
+    local cur_p  = self.powers[uid] or 1
     self.powers[uid] = p + cur_p
 
     local o = self:whichPresenter(touid)
     if not o then return end
-    cur_p = self.camps[o].uid or 0
+    cur_p = self.camps[o].uid or 1
     self.camps[o][uid] = cur_p + p
 end
 
