@@ -147,13 +147,16 @@ end
 
 function GameRoom.OnPoll(self, player, req)
     print("OnPoll")
-    local r, p = self.giftmgr:poll(player, req.punish_id)
+    local r, p, idx = self.giftmgr:poll(player, req.punish_id)
     player:SendMsg("S2CPollRep", {ret = r})
     if p > 1 then
-        self.Broadcast("S2CNotifyPowerPoll", {user = {
-                name = player.name,
-                power = p,
-        }})
+        self.Broadcast("S2CNotifyPowerPoll", {
+                user = {
+                    name = player.name,
+                    power = p,
+                },
+                id = idx,
+        })
     end
 end
 

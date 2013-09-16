@@ -85,13 +85,13 @@ end
 
 function GiftMgr:poll(player, idx)
     if self.polled_players[player.uid] or idx > 4 or idx < 1 then
-        return "FL", 0
+        return "FL", 0, idx
     end
     self.polled_players[player.uid] = idx
     local p = self.powers[player.uid] or 1
     self.polls[idx] = self.polls[idx] + p
     self.powers[player.uid] = 0
-    return "OK", p
+    return "OK", p, idx
 end
 
 function GiftMgr:sortPower(to_sort, top_n)

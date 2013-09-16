@@ -135,6 +135,7 @@ message S2CNotifyPolls {
 // 2013
 message S2CNotifyPowerPoll {
     required UserData user = 1;
+    required uint32 id = 2;
 }
 
 // 2004 惩罚开始
