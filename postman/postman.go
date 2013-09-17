@@ -3,6 +3,7 @@ package postman
 
 import (
     "fmt"
+    "time"
     "strings"
     "net/http"
     "io/ioutil"
@@ -53,7 +54,13 @@ func (this *Postman) post(req *PostRequest) {
 
 func (this *Postman) Post(url, s string) string {
     req := &PostRequest{url, s, make(chan string, 1)}
-    this.post(req)
+    //this.post(req)
+    select {
+        case this.RequestChan <- req:
+
+        case <-time.After(60 * time.Second):
+            close(req.Ret)
+    }
     return <-req.Ret
 }
 
