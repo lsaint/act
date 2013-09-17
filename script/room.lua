@@ -62,6 +62,7 @@ function GameRoom.OnLogin(self, player, req)
         player:SendMsg("S2CNotfiyPunishOptions", 
             {options = self.giftmgr.options, loser = self:getLoser().user})
         player:SendMsg("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
+        player:SendMsg("S2CNotifyScores", {scores = self.scores})
     end
 end
 
