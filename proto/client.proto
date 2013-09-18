@@ -205,4 +205,8 @@ message S2CNotifyVips {
     repeated Ranker b_vip = 2;
 }
     
+// 2014
+message S2CNotifyA2B {
+    required uint32 defer = 1;
+}
 

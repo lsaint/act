@@ -103,6 +103,7 @@ function GameRoom.roundStart(self)
         self.timer:settimer(ROUND_TIME * (ar-1), 1, self.doRound, self, a, ar)
     end
 
+    self.timer:settimer(ROUND_COUNT * ROUND_TIME, 1, self.notifyA2B, self)
     local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
     for br = 1, ROUND_COUNT do
         local t = a_total_time + ROUND_TIME * (br - 1)
@@ -127,6 +128,11 @@ function GameRoom.doRound(self, presenter, r)
         mot = {desc = m.desc},
     }   
     self:Broadcast("S2CNotifyRoundStart", bc)
+end
+
+function GameRoom.notifyA2B(self)
+    print("notifyA2B")
+    self:Broadcast("S2CNotifyA2B", {defer=A2B_ROUND_INTERVAL})
 end
 
 function GameRoom.notifyScore(self)

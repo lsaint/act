@@ -35,6 +35,7 @@ def randomPunish(**kwargs):
         ret.append(db.punish.find({}, {"_id": 0}).skip(p).limit(1).next())
     return ret, None
 
+
 #time=0 : ingore,   time=1 : now
 def saveGift(**kwargs):
     if kwargs.get("create_time") == 1:
