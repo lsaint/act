@@ -45,6 +45,9 @@ function GiftMgr:regGiftOrder(from_uid, req)
     local op, orderid, token = self:checkPostRet(ss)
     if orderid ~= "" then
         self.orderid2req[orderid] = req
+        SaveGift({uid=from_uid, to_uid=req.to_uid, gid=req.gift.id, gcount=req.gift.count,
+                  sid=self.sid, step=STEP_GIFT_REG, orderid=orderid, sn=sn, op_ret=op, 
+                  create_time=TIME_NOW, finish_time=TIME_INGORE})
     end
     return token, sn, orderid
 end
@@ -145,5 +148,8 @@ function GiftMgr.finishGift(uid, orderid)
         unpack(to_md5_args))
     local ss = GoPost(FINISH_GIFT_URL, post_string)
     print("finish order ret", ss)
+    local ret = parseUrlArg(ss)
+    SaveGift({orderid=orderid, step=STEP_GIFT_FINISH, finish_time=TIME_NOW, 
+              op_ret=(ret["op_ret"] or "")})
 end
 

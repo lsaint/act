@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import random, json, time
+from datetime import datetime
 
 from pymongo import MongoClient
 
@@ -34,16 +35,12 @@ def randomPunish(**kwargs):
         ret.append(db.punish.find({}, {"_id": 0}).skip(p).limit(1).next())
     return ret, None
 
-
-def count(**kwargs):
-    database = kwargs["db"]
-    return {"count": getattr(db, database).count()}, None
-
-
-def slice(**kwargs):
-    database = kwargs["db"]
-    ret = getattr(db, database).find().skip(kwargs["offset"]).limit(kwargs["limit"])
-    return list(ret), None
-
-
+#time=0 : ingore,   time=1 : now
+def saveGift(**kwargs):
+    if kwargs.get("create_time") == 1:
+        kwargs["create_time"] = datetime.now()
+    if kwargs.get("finish_time") == 1:
+        kwargs["finish_time"] = datetime.now()
+    db.gift.update({"orderid": kwargs["orderid"]}, {"$set": kwargs}, upsert=True)
+    return {}, None
 

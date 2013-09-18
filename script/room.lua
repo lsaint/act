@@ -224,6 +224,7 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
 
     if not req or op ~= 1 then 
         -- not register or pay unsucess,  nothing to do with power
+        SaveGift({orderid=orderid, step=STEP_GIFT_UNSUCESS, op_ret=op})
         return 
     end
     if self.status ~= "Ready" then
