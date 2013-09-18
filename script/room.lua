@@ -78,6 +78,11 @@ function GameRoom.OnStartGame(self, player, req)
 
     local rep = {ret = "WAIT_OTHER"}
     if #self.presenters == 2 then    
+        if self.presenters[1].uid == self.presenters[2].uid then
+            print("same presenter error")
+            self:OnStopGame()
+            return
+        end
         print("start sucess", self.sid)
         self:notifyStatus("Round")
         self.timer:settimer(5, 1, self.roundStart, self)
