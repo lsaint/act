@@ -132,7 +132,8 @@ end
 
 function GameRoom.notifyA2B(self)
     print("notifyA2B")
-    self:Broadcast("S2CNotifyA2B", {defer=A2B_ROUND_INTERVAL})
+    self:Broadcast("S2CNotifyA2B", {defer = A2B_ROUND_INTERVAL,
+            user = {uid = self.presenters[2].uid}})
 end
 
 function GameRoom.notifyScore(self)

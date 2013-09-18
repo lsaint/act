@@ -208,5 +208,6 @@ message S2CNotifyVips {
 // 2014
 message S2CNotifyA2B {
     required uint32 defer = 1;
+    required UserData b = 2;
 }
 
