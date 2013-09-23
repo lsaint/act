@@ -38,7 +38,7 @@ func (this *Postman) loop() {
 
 func (this *Postman) post(req *PostRequest) {
     b := strings.NewReader(req.Request)
-    fmt.Println("post-", req.Request, len(req.Request))
+    //fmt.Println("post-", req.Request, len(req.Request))
     http_req, err := http.Post(req.Url, "application/json", b)
     if err == nil {
         if body, e := ioutil.ReadAll(http_req.Body); e == nil {
