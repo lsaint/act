@@ -3,6 +3,8 @@ package.path = "./db/?.lua;" .. package.path
 package.path = "./script/lib/?.lua;" .. package.path
 package.cpath = "./script/lib/?.so;" .. package.cpath
 
+io.stdout:setvbuf("line")
+
 protobuf = require "protobuf"
 parser = require "parser"
 
