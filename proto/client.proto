@@ -109,6 +109,7 @@ message S2CNotifyRoundStart {
     required UserData presenter = 1;    
     required uint32 round = 2;
     required Motion mot = 3;
+    required uint32 time = 4;
 }
 
 // 2003 展示惩罚选项  

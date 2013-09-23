@@ -64,13 +64,19 @@ function GameRoom.OnLogin(self, player, req)
     if self.status == "Poll" then
         player:SendMsg("S2CNotfiyPunishOptions", 
             {options = self.giftmgr.options, loser = self:getLoser().user})
-        player:SendMsg("S2CNotifyTop3Giver", 
-            {top3 = self.giftmgr:top3()})
+        player:SendMsg("S2CNotifyTop3Giver", {top3 = self.giftmgr:top3()})
     elseif self.status == "Punish" then
         player:SendMsg("S2CNotfiyPunishOptions", 
             {options = self.giftmgr.options, loser = self:getLoser().user})
         player:SendMsg("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
         player:SendMsg("S2CNotifyScores", {scores = self.scores})
+    elseif self.status == "Round" then
+        player:SendMsg("S2CNotifyRoundStart", {
+                presenter = {uid = self.round_info[1].uid},
+                round = self.round_info[2],
+                mot = {desc = self.round_info[3].desc},
+                time = ROUND_TIME - (os.time() - self.round_info[4]),
+            })
     end
 end
 
@@ -131,14 +137,15 @@ function GameRoom.roundStart(self)
 end
 
 function GameRoom.doRound(self, presenter, r)
-    print("DoRound", r, os.time())
-    self.round_info = {presenter, r}
+    print("DoRound", r)
     local m = RandomMotion()
+    self.round_info = {presenter, r, m, os.time()}
     self.guess = Guess:new(m)
     local bc = {
         presenter = {uid = presenter.uid},
         round = r,
         mot = {desc = m.desc},
+        time = ROUND_TIME,
     }   
     self:Broadcast("S2CNotifyRoundStart", bc)
 end
