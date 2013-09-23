@@ -41,7 +41,8 @@ func NewGateServer(sendrecver GateSendRecver) *GateServer {
 func (this *GateServer) Start() {
     ln, err := net.Listen("tcp", ":13829")                                                                            
     if err != nil {
-        fmt.Println("err", err)
+        fmt.Println("Listen err", err)
+        return
     }
     fmt.Println("gateServer runing")
     for {

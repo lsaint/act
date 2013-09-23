@@ -64,7 +64,7 @@ func (this *ClientConnection) sendall() bool {
         if this.connState != ConnStateDisc {
             this.connState = ConnStateDisc
         }
-        fmt.Print("send err:", err)
+        fmt.Println("send err:", err)
         return false
     }
     return true
@@ -75,7 +75,6 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
     for {
         // write
         if !this.sendall() {
-            fmt.Println("send err")
             return false
         }
 
