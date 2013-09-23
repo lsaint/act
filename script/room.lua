@@ -43,6 +43,14 @@ function GameRoom.notifyStatus(self, st)
     self:Broadcast("S2CNotifyStatus", {status = st})
 end
 
+function GameRoom.A(self)
+    return self.presenters[1]
+end
+
+function GameRoom.B(self)
+    return self.presenters[2]
+end
+
 function GameRoom.OnLogin(self, player, req)
     self.uid2player[req.uid] = player
     local rep = {
@@ -202,10 +210,12 @@ end
 
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
-    if player then print(player.uid, player.role) end
-    if player and not player:isPresenter() then
-        print("no auth to stop", player.uid)
-        return
+    if player then  
+        if self.status ~= "Ready" and player.uid ~= self:A().uid and
+                player.uid ~= self:B().uid then
+            print("not presenter stop game")
+            return
+        end
     end
     self:notifyStatus("Ready")
 
@@ -316,7 +326,7 @@ function GameRoom.OnLogout(self, player, req)
     print("OnLogout", player.uid, player.role)
     if player:isPresenter() then 
         if self.status ~= "Ready" then
-            self:OnStopGame()
+            self:OnStopGame(player)
         else
             self.presenters = {}
         end
