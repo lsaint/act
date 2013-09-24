@@ -144,6 +144,7 @@ func (this *GateServer) Login(conn *ClientConnection, m pb.Message) *proto.GateI
     sid := req.GetChannel()
     // register 
     this.uid2conn[uid] = conn
+    fmt.Println("[CCU]", len(this.uid2conn))
     if conns, exist := this.sid2conns[sid]; exist {
         this.sid2conns[sid] = append(conns, conn)
     } else {
