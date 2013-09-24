@@ -20,6 +20,7 @@ type ClientConnection struct {
     conn        net.Conn
     reader      *bufio.Reader
     writer      *bufio.Writer
+    sendchan    chan []byte
     connState   int
 }
 
@@ -28,6 +29,7 @@ func NewClientConnection(c net.Conn) *ClientConnection {
     cliConn.conn = c
     cliConn.reader = bufio.NewReader(c)
     cliConn.writer = bufio.NewWriter(c)
+    cliConn.sendchan = make(chan []byte, 64)
     return cliConn
 }
 
@@ -38,17 +40,29 @@ func (this *ClientConnection) Send(buf []byte) {
     binary.LittleEndian.PutUint32(head, uint32(len(buf)))
     buf = append(head, buf...)
 
-    if _, err := this.writer.Write(buf); err != nil {
-        fmt.Println("Send err:", err)
+    select {
+        case this.sendchan <- buf:
+
+        default:
+            fmt.Println("send chan overflow")
     }
 }
 
 func (this *ClientConnection) sendall() bool {
-    if err := this.writer.Flush(); err != nil {
-        if this.connState != ConnStateDisc {
-            this.connState = ConnStateDisc
+    for more := true; more; {
+        select {
+            case b := <-this.sendchan:
+                if _, err := this.writer.Write(b); err != nil {
+                    fmt.Println("write err:", err)
+                    return false
+                }
+            default:
+                more = false
         }
-        fmt.Println("send err:", err)
+    }
+
+    if err := this.writer.Flush(); err != nil {
+        fmt.Println("flush err:", err)
         return false
     }
     return true
@@ -57,10 +71,11 @@ func (this *ClientConnection) sendall() bool {
 func (this *ClientConnection) duplexRead(buff []byte) bool {
     var read_size int
     for {
-        //// write
-        //if !this.sendall() {
-        //    return false
-        //}
+        // write
+        if !this.sendall() {
+            this.connState = ConnStateDisc
+            return false
+        }
 
         // read
         this.conn.SetReadDeadline(time.Now().Add(1e8))
