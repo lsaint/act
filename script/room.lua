@@ -70,12 +70,14 @@ function GameRoom.OnLogin(self, player, req)
             {options = self.giftmgr.options, loser = self:getLoser().user})
         player:SendMsg("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
         player:SendMsg("S2CNotifyScores", {scores = self.scores})
-    elseif self.status == "Round" then
+    elseif self.status == "Round" and #self.round_info ~= 0 then
+        t = ROUND_TIME - (os.time() - self.round_info[4])
+        if t < 0 then return end
         player:SendMsg("S2CNotifyRoundStart", {
                 presenter = {uid = self.round_info[1].uid},
                 round = self.round_info[2],
                 mot = {desc = self.round_info[3].desc},
-                time = ROUND_TIME - (os.time() - self.round_info[4]),
+                time = t,
             })
     end
 end
