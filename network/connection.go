@@ -21,7 +21,6 @@ type ClientConnection struct {
     reader      *bufio.Reader
     writer      *bufio.Writer
     sendchan    chan []byte
-    connState   int
 }
 
 func NewClientConnection(c net.Conn) *ClientConnection {
@@ -34,8 +33,6 @@ func NewClientConnection(c net.Conn) *ClientConnection {
 }
 
 func (this *ClientConnection) Send(buf []byte) {
-    if this.connState == ConnStateDisc { return }
-
     head := make([]byte, 4)
     binary.LittleEndian.PutUint32(head, uint32(len(buf)))
     buf = append(head, buf...)
@@ -44,7 +41,7 @@ func (this *ClientConnection) Send(buf []byte) {
         case this.sendchan <- buf:
 
         default:
-            fmt.Println("send chan overflow")
+            fmt.Println("send chan overflow or closed")
     }
 }
 
@@ -73,8 +70,7 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
     for {
         // write
         if !this.sendall() {
-            this.connState = ConnStateDisc
-            return false
+            break
         }
 
         // read
@@ -86,7 +82,7 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
                 continue
             } else {
                 fmt.Println("read err disconnect:", err)
-                return false
+                break
             }
         }
 
@@ -97,6 +93,7 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
         }
         return true
     }
+    this.Close()
     return false
 }
 
@@ -119,7 +116,7 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
 }
 
 func (this *ClientConnection) Close() {
-    this.connState  = ConnStateDisc 
+    this.sendchan = nil
     this.conn.Close()
 }
 
