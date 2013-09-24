@@ -38,26 +38,10 @@ func (this *ClientConnection) Send(buf []byte) {
     binary.LittleEndian.PutUint32(head, uint32(len(buf)))
     buf = append(head, buf...)
 
-    this.writer.Write(buf)
+    if _, err := this.writer.Write(buf); err != nil {
+        fmt.Println("Send err:", err)
+    }
 }
-
-//func (this *ClientConnection) blockSend(b []byte) bool {
-//    for len(b) > 0 {
-//        n, err := this.conn.Write(b)
-//        if err == nil {
-//            b = b[n:]
-//        } else if e, ok := err.(*net.OpError); ok && e.Temporary() {
-//            continue
-//        } else {
-//            if this.connState != ConnStateDisc {
-//                this.connState = ConnStateDisc
-//            }
-//            fmt.Println("blockSend disconnect")
-//            return false
-//        }
-//    }
-//    return true
-//}
 
 func (this *ClientConnection) sendall() bool {
     if err := this.writer.Flush(); err != nil {
@@ -73,10 +57,10 @@ func (this *ClientConnection) sendall() bool {
 func (this *ClientConnection) duplexRead(buff []byte) bool {
     var read_size int
     for {
-        // write
-        if !this.sendall() {
-            return false
-        }
+        //// write
+        //if !this.sendall() {
+        //    return false
+        //}
 
         // read
         this.conn.SetReadDeadline(time.Now().Add(1e8))
@@ -86,7 +70,7 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
                 read_size = n
                 continue
             } else {
-                //fmt.Println("read err, disconnect", err)
+                fmt.Println("read err, disconnect", err)
                 return false
             }
         }
@@ -124,6 +108,3 @@ func (this *ClientConnection) Close() {
     this.conn.Close()
 }
 
-func (this* ClientConnection) IsClose() bool {
-    return this.connState == ConnStateDisc
-}
