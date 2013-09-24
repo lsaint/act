@@ -69,7 +69,7 @@ func (this *GateServer) acceptConn(conn net.Conn) {
             continue
         }
         cliConn.Close()
-        this.buffChan <- &ConnBuff{cliConn, nil}
+        this.Logout(cliConn)
         break
     }
 }
@@ -80,10 +80,6 @@ func (this *GateServer) parse() {
             case conn_buff := <-this.buffChan :
                 msg := conn_buff.buff
                 conn := conn_buff.conn
-                if conn.IsClose() { // Logout
-                    this.Logout(conn)
-                    continue
-                }
                 uri := binary.LittleEndian.Uint32(msg[:4])
                 var gheader *proto.GateInHeader
                 if uri == 1 { // Login
