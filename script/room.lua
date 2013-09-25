@@ -117,7 +117,7 @@ end
 
 function GameRoom.OnUnReady(self, player, req)
     if self.status == "Ready" then
-        self.presenters[2] = nil
+        table.remove(self.presenters, 2)
     end
 end
 
