@@ -10,8 +10,7 @@ import (
 )
 
 const (
-    ConnStateIn    = iota
-    ConnStateDisc  = iota
+    XML_REP = `<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>\x00`
 
     MAX_LEN_HEAD   = 1024 * 4
 )
@@ -41,7 +40,7 @@ func (this *ClientConnection) Send(buf []byte) {
         case this.sendchan <- buf:
 
         default:
-            fmt.Println("send chan overflow or closed")
+            //fmt.Println("send chan overflow or closed")
     }
 }
 
@@ -81,7 +80,7 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
                 read_size = n
                 continue
             } else {
-                fmt.Println("read err disconnect:", err)
+                //fmt.Println("read err disconnect:", err)
                 break
             }
         }
@@ -104,7 +103,12 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
     }
     len_head := binary.LittleEndian.Uint32(buff_head)
     if len_head > MAX_LEN_HEAD {
-        fmt.Println("message len too long", len_head)
+        if len_head == 1819242556 {
+            this.WriteFlashAuthRep()
+        } else {
+            fmt.Println("message len too long", len_head)
+            this.Close()
+        }
         return
     }
     ret = make([]byte, len_head)
@@ -118,5 +122,10 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
 func (this *ClientConnection) Close() {
     this.sendchan = nil
     this.conn.Close()
+}
+
+func (this *ClientConnection) WriteFlashAuthRep() {
+    this.writer.Write([]byte(XML_REP))
+    this.writer.Flush()
 }
 

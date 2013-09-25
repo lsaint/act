@@ -116,7 +116,7 @@ function GameRoom.OnStartGame(self, player, req)
 end
 
 function GameRoom.OnUnReady(self, player, req)
-    if self.status == "Ready" and player.uid == self:B().uid then
+    if self.status == "Ready" then
         self.presenters[2] = nil
     end
 end

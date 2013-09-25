@@ -68,7 +68,6 @@ func (this *GateServer) acceptConn(conn net.Conn) {
             this.buffChan <- &ConnBuff{cliConn, buff_body}
             continue
         }
-        //cliConn.Close()
         this.buffChan <- &ConnBuff{cliConn, nil}
         break
     }
