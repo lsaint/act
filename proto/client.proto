@@ -70,10 +70,13 @@ message S2CLoginRep {
     required UserData user = 3;
 }
 
-
 // 2 其中1位主播点击准备就绪 
 message C2SStartGame {
     required UserData presenter = 1;
+}
+
+// 8 二麦变动
+message C2SUnReady {
 }
 
 // 1002  

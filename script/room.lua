@@ -115,6 +115,12 @@ function GameRoom.OnStartGame(self, player, req)
     player:SendMsg("S2CStartGameRep", rep)
 end
 
+function GameRoom.OnUnReady(self, player, req)
+    if self.status == "Ready" and player.uid == self:B().uid then
+        self.presenters[2] = nil
+    end
+end
+
 function GameRoom.roundStart(self)
     print("RoundStart")
     local a, b = self.presenters[1],  self.presenters[2]
