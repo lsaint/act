@@ -95,6 +95,9 @@ func (this *GateServer) parse() {
                         break
                     }
                     gheader = this.Login(conn, pb_msg)
+                } else if uri == 0 {
+                    this.Logout(conn)
+                    continue
                 } else {
                     gheader = this.conn2gheader[conn]
                 }
@@ -122,7 +125,6 @@ func (this *GateServer) parse() {
 func (this *GateServer) Logout(conn *ClientConnection) {
     h := this.conn2gheader[conn]
     uid, sid := h.GetUid(), h.GetSid()
-    delete(this.uid2conn, uid)
     conns := this.sid2conns[sid]
     for i, c := range conns {
         if c == conn {
@@ -133,7 +135,11 @@ func (this *GateServer) Logout(conn *ClientConnection) {
     this.sid2conns[sid] = conns
     delete(this.conn2gheader, conn)
     
-    this.GateEntry <- &proto.GateInPack{Header: h}
+    _, exist := this.uid2conn[uid] 
+    delete(this.uid2conn, uid)
+    if uid != 0 && exist {
+        this.GateEntry <- &proto.GateInPack{Header: h}
+    }
 }
 
 func (this *GateServer) Login(conn *ClientConnection, m pb.Message) *proto.GateInHeader{

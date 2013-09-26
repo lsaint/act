@@ -32,7 +32,6 @@ local function WatchDog()
         end
         local method = string.format("On%s", pname)
         --print(string.format("%s%s%s", "---------", pname, "---------"))
-        --pt(req)
         room[method](room, player, req)
     end
 

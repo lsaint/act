@@ -10,7 +10,7 @@ import (
 )
 
 const (
-    XML_REP = `<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>\x00`
+    XML_REP = `<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>`
 
     MAX_LEN_HEAD   = 1024 * 4
 )
@@ -107,8 +107,8 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
             this.WriteFlashAuthRep()
         } else {
             fmt.Println("message len too long", len_head)
-            this.Close()
         }
+        this.Close()
         return
     }
     ret = make([]byte, len_head)
@@ -126,6 +126,7 @@ func (this *ClientConnection) Close() {
 
 func (this *ClientConnection) WriteFlashAuthRep() {
     this.writer.Write([]byte(XML_REP))
+    this.writer.Write([]byte("\x00"))
     this.writer.Flush()
 }
 
