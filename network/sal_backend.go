@@ -3,7 +3,6 @@ package network
 import (
     "fmt"
     "net"
-    "reflect"
     "encoding/binary"
 
     pb "code.google.com/p/goprotobuf/proto"
@@ -16,10 +15,6 @@ const (
     URI_TRANSPORT       = 2
     URI_UNREGISTER      = 3
 )
-
-type GateSendRecver interface {
-    Start(out chan *proto.SalPack, in chan *proto.SalPack)
-}
 
 
 type SalBackend struct {
@@ -78,18 +73,18 @@ func (this *SalBackend) parse() {
                 conn := conn_buff.conn
 
                 if msg == nil {
-                    this.unregister()
+                    this.unregister(conn)
                     continue
                 }
 
                 uri := binary.LittleEndian.Uint32(msg[:4])
                 switch uri {
                 case 1:
-                    this.register()
+                    this.register(msg[4:], conn)
                 case 2:
                     this.comein(msg[4:])
                 default:
-                    this.unregister()
+                    this.unregister(conn)
                 }
 
             case pack := <-this.SalExit :
@@ -121,7 +116,7 @@ func (this *SalBackend) comeout(pack *proto.SalPack) {
         uri_field := make([]byte, 4)
         binary.LittleEndian.PutUint32(uri_field, uint32(URI_TRANSPORT))
         data = append(data, uri_field...)
-        conn.Send(buf)
+        conn.Send(data)
     }
 }
 
@@ -139,9 +134,9 @@ func (this *SalBackend) unregister(cc *ClientConnection) {
     delete(this.conn2sid, cc)
 }
 
-type ConnBuff struct {
-    conn    *ClientConnection
-    buff    []byte
-}
+//type ConnBuff struct {
+//    conn    *ClientConnection
+//    buff    []byte
+//}
 
 
