@@ -14,6 +14,7 @@ import (
 
     "act/script"
     "act/network"
+    "act/proto"
 )
 
 
@@ -37,6 +38,13 @@ func main() {
 
     //authServer := network.AuthServer{}
     //go authServer.Start()
+
+    sal_recv_chan := make(chan *proto.SalPack)
+    sal_send_chan := make(chan *proto.SalPack)
+    sal_bakend := network.NewSalBackend(sal_recv_chan, sal_send_chan)
+    go sal_bakend.Start()
+    sal_server := network.NewSalServer(sal_recv_chan, sal_send_chan)
+    go sal_server.Start()
     
     luaMgr := script.NewLuaMgr()
 
