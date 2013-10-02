@@ -2,7 +2,7 @@ package network
 
 /*
 #cgo CFLAGS: -I /home/lsaint/go/src/gosal/open_sal/sdk
-#cgo LDFLAGS: -L /home/lsaint/go/src/gosal/ -lopenyy_sal
+#cgo LDFLAGS: -L /home/lsaint/go/src/act/ -lopenyy_sal
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,11 +167,5 @@ func (this *SalServer) handleUserMsg(ev *C.openyy_SALEvent_t) {
         default:
             fmt.Println("user recive buff overflow")
     }
-
-    //b := make([]byte, 4)
-    //binary.LittleEndian.PutUint32(b, 3737)
-    ////m := C.CString("lsaint")
-    //m := (*C.char)(unsafe.Pointer(&b[0]))
-    //C.openyy_SAL_BcMsgToTopCh(this.sal, 43670710, 0, m, 4)
 }
 

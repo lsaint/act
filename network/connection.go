@@ -12,7 +12,8 @@ import (
 const (
     XML_REP = `<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>`
 
-    MAX_LEN_HEAD   = 1024 * 4
+    MAX_LEN_HEAD    = 1024 * 4
+    LEN_HEAD        = 2
 )
 
 type ClientConnection struct {
@@ -32,7 +33,7 @@ func NewClientConnection(c net.Conn) *ClientConnection {
 }
 
 func (this *ClientConnection) Send(buf []byte) {
-    head := make([]byte, 4)
+    head := make([]byte, LEN_HEAD)
     binary.LittleEndian.PutUint32(head, uint32(len(buf)))
     buf = append(head, buf...)
 
@@ -97,11 +98,11 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
 }
 
 func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
-    buff_head := make([]byte, 4)
+    buff_head := make([]byte, LEN_HEAD)
     if !this.duplexRead(buff_head) {
         return
     }
-    len_head := binary.LittleEndian.Uint32(buff_head)
+    len_head := binary.LittleEndian.Uint16(buff_head)
     if len_head > MAX_LEN_HEAD {
         if len_head == 1819242556 {
             this.WriteFlashAuthRep()
