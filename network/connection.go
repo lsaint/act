@@ -10,10 +10,9 @@ import (
 )
 
 const (
-    XML_REP = `<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>`
-
     MAX_LEN_HEAD    = 1024 * 4
     LEN_HEAD        = 2
+    LEN_URI         = 4
 )
 
 type ClientConnection struct {
@@ -104,11 +103,7 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
     }
     len_head := binary.LittleEndian.Uint16(buff_head)
     if len_head > MAX_LEN_HEAD {
-        if len_head == 1819242556 {
-            this.WriteFlashAuthRep()
-        } else {
-            fmt.Println("message len too long", len_head)
-        }
+        fmt.Println("message len too long", len_head)
         this.Close()
         return
     }
@@ -124,10 +119,3 @@ func (this *ClientConnection) Close() {
     this.sendchan = nil
     this.conn.Close()
 }
-
-func (this *ClientConnection) WriteFlashAuthRep() {
-    this.writer.Write([]byte(XML_REP))
-    this.writer.Write([]byte("\x00"))
-    this.writer.Flush()
-}
-

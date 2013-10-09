@@ -5,7 +5,7 @@ import (
     "fmt"
     "net"
     "bytes"
-    "bufio"
+    "encoding/binary"
 
     pb "code.google.com/p/goprotobuf/proto" 
 
@@ -23,31 +23,35 @@ type SalAgent   struct {
     cc      *ClientConnection
     buffChan    chan []byte
     uid2buffer  map[uint32]*bytes.Buffer
-    sid2buffer  map[uint32]*bytes.Buffer
+    
+    salRecvChan   chan *proto.SalPack
     salSendChan   chan *proto.SalPack
-    salRecvChan   chan *proto.Salpack
+
+    clientBuffChan  chan *ClientBuff
 }
 
 
-func NewSalAgent() *SalAgent {
+func NewSalAgent(salSendChan  chan *proto.SalPack,
+                    clientBuffChan chan *ClientBuff) *SalAgent {
     conn, err := net.Dial("tcp", SAL_FRONTEND)
     if err != nil {
-        panic("connect to sal front end err", err)
+        panic("connect to sal front end err")
     }
+    fmt.Println("connect to sal frontend sucess")
     return &SalAgent{cc: NewClientConnection(conn),
                 uid2buffer: make(map[uint32]*bytes.Buffer),
-                sid2buffer: make(map[uint32]*bytes.Buffer),
                 buffChan: make(chan []byte, 1024),
-                salSendChan: make(chan *proto.SalPack, 1024),
+                salSendChan: salSendChan,
                 salRecvChan: make(chan *proto.SalPack, 1024)}
 }
 
-func (this *SalAgent) readFromSal() {
+func (this *SalAgent) ReadFromSal() {
+    fmt.Println("sal agent running")
     for {
         if buff, ok := this.cc.duplexReadBody(); ok {
             this.buffChan <- buff
-            fmt.Println("read sal msg err", err)
-            break
+        } else {
+            panic("disconnect from sal frontend")
         }
     }
 }
@@ -64,7 +68,7 @@ func (this *SalAgent) doRecv() {
     }
 }
 
-func (this *SalAgent) parseSalPack() {
+func (this *SalAgent) processSalRecvChan() {
     for pack := range this.salRecvChan {
         uids := pack.GetUids()
         sid  := pack.GetSid()
@@ -76,39 +80,32 @@ func (this *SalAgent) parseSalPack() {
                 this.uid2buffer[uid] = new(bytes.Buffer)
             }
         } else {
-            buffer = this.sid2buffer[sid]
-            if buffer == nil {
-                this.sid2buffer[sid] = new(bytes.Buffer)
-            }
+            // only process single user's msg
+            // no situation for client broadcast to server
+            fmt.Println("client broadcast server err", sid)
+            continue
         }
         buffer.Write(pack.GetBin())
 
         if buffer.Len() < LEN_HEAD { continue }
-        length := binary.LittleEndian.Uint16(head[:LEN_HEAD])
+        length := int(binary.LittleEndian.Uint16(buffer.Bytes()[:LEN_HEAD]))
         if length < buffer.Len() { 
-            // send to gate server's buff chan
+            buffer.Next(LEN_HEAD)
+            client_buff := &ClientBuff{uids[0], sid, buffer.Next(length)}
+            // send to gate
+            this.clientBuffChan <- client_buff
         }
-    }
-}
-
-func (this *SalAgent) parseBuffer() {
-    head := make([]byte, LEN_HEAD)
-    var length uint16
-    for buff := range this.buffChan {
-        if _, err := this.buffer.Write(buff); err != nil {
-            fmt.Println("buffer write err", err)
-        }
-
-        // parse
-        if this.buffer.Len() < LEN_HEAD { continue }
-        this.buffer.Read(head)
-        length := binary.LittleEndian.Uint16(head)
     }
 }
 
 func (this *SalAgent) doSend() {
     for pack := range this.salSendChan {
-        
+        if data, err := pb.Marshal(pack); err == nil {
+            uri_field := make([]byte, LEN_URI)
+            binary.LittleEndian.PutUint32(uri_field, uint32(URI_TRANSPORT))
+            data = append(data, uri_field...)
+            this.cc.Send(data)
+        }
     }
 }
 

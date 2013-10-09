@@ -2,178 +2,85 @@ package network
 
 import (
     "fmt"
-    "net"
-    "reflect"
+    "bytes"
     "encoding/binary"
 
     pb "code.google.com/p/goprotobuf/proto"
 
     "act/proto"
 )
-
 type GateSendRecver interface {
     Start(out chan *proto.GateOutPack, in chan *proto.GateInPack)
 }
 
 
-type GateServer struct {
-    buffChan        chan *ConnBuff
-    conn2gheader    map[*ClientConnection]*proto.GateInHeader
-    uid2conn        map[uint32]*ClientConnection
-    sid2conns       map[uint32][]*ClientConnection
-    GateEntry       chan *proto.GateInPack
-    GateExit        chan *proto.GateOutPack
+type ClientBuff struct {
+    Uid         uint32    
+    Sid         uint32
+    Bin         []byte
 }
 
-func NewGateServer(sendrecver GateSendRecver) *GateServer {
-    gs := &GateServer{buffChan: make(chan *ConnBuff),
-                        conn2gheader: make(map[*ClientConnection]*proto.GateInHeader),
-                        uid2conn: make(map[uint32]*ClientConnection),
-                        sid2conns: make(map[uint32][]*ClientConnection),
+
+
+type GateServer struct {
+    clientBuffChan  chan *ClientBuff
+    GateEntry       chan *proto.GateInPack
+    GateExit        chan *proto.GateOutPack
+    uid2buffer      map[uint32]*bytes.Buffer
+    salSendChan     chan *proto.SalPack
+}
+
+func NewGateServer(sendrecver GateSendRecver, 
+                    clientBuffChan chan *ClientBuff,
+                    salSendChan chan *proto.SalPack) *GateServer {
+    gs := &GateServer{clientBuffChan: clientBuffChan,
+                        salSendChan: salSendChan,
+                        uid2buffer: make(map[uint32]*bytes.Buffer),
                         GateEntry: make(chan *proto.GateInPack, 1024),
                         GateExit: make(chan *proto.GateOutPack, 1024)}
     go sendrecver.Start(gs.GateExit, gs.GateEntry)
-    go gs.parse()
     return gs
 }
 
-
 func (this *GateServer) Start() {
-    ln, err := net.Listen("tcp", ":13829")                                                                            
-    if err != nil {
-        fmt.Println("Listen err", err)
-        return
-    }
-    fmt.Println("gateServer runing")
-    for {
-        conn, err := ln.Accept()
-        if err != nil {
-            fmt.Println("Accept error", err)
-            continue
-        }
-        go this.acceptConn(conn)
-    }
+    fmt.Println("gate server running")
+    go this.processClientBuff()
+    go this.processGateExit()
 }
 
-func (this *GateServer) acceptConn(conn net.Conn) {
-    //defer func() {
-    //    if r := recover(); r != nil {
-    //        fmt.Println("parse err", r)
-    //    }
-    //}()
-
-    cliConn := NewClientConnection(conn)
-    for {
-        if buff_body, ok := cliConn.duplexReadBody(); ok {
-            this.buffChan <- &ConnBuff{cliConn, buff_body}
-            continue
-        }
-        this.buffChan <- &ConnBuff{cliConn, nil}
-        break
-    }
-}
-
-func (this *GateServer) parse() {
-    for {
-        select {
-            case conn_buff := <-this.buffChan :
-                msg := conn_buff.buff
-                conn := conn_buff.conn
-
-                if msg == nil {
-                    this.Logout(conn)
-                    continue
-                }
-
-                uri := binary.LittleEndian.Uint32(msg[:4])
-                var gheader *proto.GateInHeader
-                if uri == 1 { // Login
-                    pb_msg := reflect.New(proto.URI2PROTO[uri]).Interface().(pb.Message)
-                    err := pb.Unmarshal(msg[4:], pb_msg)
-                    if err != nil {
-                        fmt.Println("pb Unmarshal", err)
-                        break
-                    }
-                    gheader = this.Login(conn, pb_msg)
-                } else if uri == 0 {
-                    this.Logout(conn)
-                    continue
-                } else {
-                    gheader = this.conn2gheader[conn]
-                }
-                //fmt.Println("gate entry", uri)
-                this.GateEntry <-&proto.GateInPack{Header: gheader, Uri: pb.Uint32(uri), Bin: msg[4:]}
-
-            case gop := <-this.GateExit :
-                //fmt.Println("gateout:", gop.GetSid(), gop.GetUids(), len(gop.GetBin()))
-                uids := gop.GetUids()
-                if len(uids) != 0 {
-                    for _, uid := range uids {
-                        if conn, ok := this.uid2conn[uid]; ok {
-                            conn.Send(gop.GetBin())
-                        }
-                    }
-                } else {
-                    if sid := gop.GetSid(); sid != 0 {
-                        this.Broadcast(sid, gop.GetBin())
-                    }
-                }
+func (this *GateServer) processClientBuff() {
+    for { select {
+        case client_buff := <-this.clientBuffChan:
+            uid := client_buff.Uid
+            var buffer *bytes.Buffer
+            buffer = this.uid2buffer[uid]
+            if buffer == nil {
+                this.uid2buffer[uid] = new(bytes.Buffer)
             }
-    }
+            buffer.Write(client_buff.Bin)
+            if buffer.Len() < LEN_HEAD { continue }
+            length := int(binary.LittleEndian.Uint16(buffer.Bytes()[:LEN_HEAD]))
+            if length > buffer.Len() + LEN_HEAD { continue }
+
+            buffer.Next(LEN_HEAD)
+            body := buffer.Next(length)
+            uri := binary.LittleEndian.Uint32(body[:LEN_URI])
+            gheader := &proto.GateInHeader{Uid:pb.Uint32(client_buff.Uid), 
+                                            Sid: pb.Uint32(client_buff.Sid)}
+            this.GateEntry <-&proto.GateInPack{Header: gheader, 
+                                        Uri: pb.Uint32(uri), Bin: body[LEN_URI:]}
+    }}
 }
 
-func (this *GateServer) Logout(conn *ClientConnection) {
-    h := this.conn2gheader[conn]
-    uid, sid := h.GetUid(), h.GetSid()
-    conns := this.sid2conns[sid]
-    for i, c := range conns {
-        if c == conn {
-            conns[i] = conns[len(conns)-1]
-            conns = conns[:len(conns)-1]
-        }
-    }
-    this.sid2conns[sid] = conns
-    delete(this.conn2gheader, conn)
-    
-    _, exist := this.uid2conn[uid] 
-    delete(this.uid2conn, uid)
-    if uid != 0 && exist {
-        this.GateEntry <- &proto.GateInPack{Header: h}
-    }
+func (this *GateServer) processGateExit() {
+    for { select {
+        case gop := <-this.GateExit :
+            data := make([]byte, LEN_HEAD)
+            bin := gop.GetBin()
+            binary.LittleEndian.PutUint16(data, uint16(len(bin)))
+            data = append(data, bin...)
+            pack := &proto.SalPack{Sid: gop.Sid, Uids: gop.Uids, Bin: data}
+            this.salSendChan <- pack
+     }}
 }
-
-func (this *GateServer) Login(conn *ClientConnection, m pb.Message) *proto.GateInHeader{
-    // check token
-    req := m.(*proto.C2SLogin)
-    uid := req.GetUid()
-    sid := req.GetChannel()
-    // register 
-    this.uid2conn[uid] = conn
-    fmt.Println("[CCU]", len(this.uid2conn))
-    if conns, exist := this.sid2conns[sid]; exist {
-        this.sid2conns[sid] = append(conns, conn)
-    } else {
-        conns := make([]*ClientConnection, 0, 10)
-        conns = append(conns, conn)
-        this.sid2conns[sid] = conns
-    }
-    gheader := &proto.GateInHeader{Uid: pb.Uint32(uid), Sid: pb.Uint32(sid)}
-    this.conn2gheader[conn] = gheader
-    return gheader
-}
-
-func (this *GateServer) Broadcast(sid uint32, bin []byte) {
-    if conns, ok := this.sid2conns[sid]; ok {
-        for _, conn := range conns {
-            conn.Send(bin)
-        }
-    }
-}
-
-
-type ConnBuff struct {
-    conn    *ClientConnection
-    buff    []byte
-}
-
 

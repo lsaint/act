@@ -39,17 +39,16 @@ func main() {
     //authServer := network.AuthServer{}
     //go authServer.Start()
 
-    sal_recv_chan := make(chan *proto.SalPack)
-    sal_send_chan := make(chan *proto.SalPack)
-    sal_bakend := network.NewSalBackend(sal_recv_chan, sal_send_chan)
-    go sal_bakend.Start()
-    sal_server := network.NewSalServer(sal_recv_chan, sal_send_chan)
-    go sal_server.Start()
-    
+    salSendChan := make(chan *proto.SalPack, 1024)
+    clientBuffChan := make(chan *network.ClientBuff, 1024)
+
     luaMgr := script.NewLuaMgr()
 
-    gs := network.NewGateServer(luaMgr)
+    gs := network.NewGateServer(luaMgr, clientBuffChan, salSendChan)
     go gs.Start()
+
+    agent := network.NewSalAgent(salSendChan, clientBuffChan)
+    go agent.ReadFromSal()
 
     handleSig()
 }
