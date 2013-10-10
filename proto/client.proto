@@ -199,8 +199,8 @@ message S2CNotifyGift {
 }
 
 // 2010
-message S2CNotifyTop3Giver {
-    repeated Ranker top3 = 1; 
+message S2CNotifyTopnGiver {
+    repeated Ranker topn = 1; 
 }
 
 // 2011
