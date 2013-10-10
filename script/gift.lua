@@ -111,8 +111,8 @@ function GiftMgr:sortPower(to_sort, top_n)
     return ret
 end
 
-function GiftMgr:top3()
-    return self:sortPower(self.powers, 3)
+function GiftMgr:topn()
+    return self:sortPower(self.powers, 5)
 end
 
 function GiftMgr:vips()

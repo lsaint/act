@@ -64,7 +64,6 @@ function GameRoom.OnLogin(self, player, req)
     if self.status == "Poll" then
         player:SendMsg("S2CNotfiyPunishOptions", 
             {options = self.giftmgr.options, loser = self:getLoser().user})
-        player:SendMsg("S2CNotifyTop3Giver", {top3 = self.giftmgr:top3()})
     elseif self.status == "Punish" then
         player:SendMsg("S2CNotfiyPunishOptions", 
             {options = self.giftmgr.options, loser = self:getLoser().user})
@@ -102,8 +101,7 @@ function GameRoom.OnStartGame(self, player, req)
         print("start sucess", self.sid)
         self:notifyStatus("Round")
         self.timer:settimer(5, 1, self.roundStart, self)
-        local bc_vip_count = (TOTAL_ROUND_TIME + POLL_TIME) / BC_VIP_INTERVAL + 1
-        self.timer:settimer(BC_VIP_INTERVAL, bc_vip_count, self.notifyVips, self)
+        self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
         self.giftmgr.presenters = self.presenters
         rep.ret = "OK"
     else 
@@ -176,7 +174,6 @@ function GameRoom.pollStart(self)
     local bc = {options = RandomPunish(), loser = self:getLoser().user}
     self.giftmgr.options = bc.options
     self:Broadcast("S2CNotfiyPunishOptions", bc)
-    self:Broadcast("S2CNotifyTop3Giver", {top3 = self.giftmgr:top3()})
     self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
     self.timer:settimer(BC_POLLS_INTERVAL, POLL_TIME/2+1, self.notifyPolls, self)
 end
@@ -334,6 +331,10 @@ function GameRoom.notifyVips(self)
     print("notifyVips")
     local a, b = self.giftmgr:vips()
     self:Broadcast("S2CNotifyVips", {a_vip = a,  b_vip = b})
+end
+
+function GameRoom.notifyTopn(self)
+    self:Broadcast("S2CNotifyTopnGiver", {topn = self.giftmgr:topn()})
 end
 
 function GameRoom.OnLogout(self, player, req)
