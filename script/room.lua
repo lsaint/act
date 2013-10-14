@@ -228,6 +228,8 @@ function GameRoom.OnStopGame(self, player, req)
             print("not presenter stop game")
             return
         end
+        self:Broadcast("S2CNotifyChat", { msg = "", user = { name = player.name },
+                                        type = STOP_PRESENTER_LEFT })
     end
     self:notifyStatus("Ready")
 
@@ -343,8 +345,6 @@ function GameRoom.OnLogout(self, player, req)
     if player:isPresenter() then 
         if self.status ~= "Ready" then
             self:OnStopGame(player)
-        else
-            self.presenters = {}
         end
     end
     self.uid2player[player.uid] = nil
