@@ -12,6 +12,8 @@ import (
 const (
     XML_REP = `<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>`
 
+    LEN_HEAD    =   2
+    LEN_URI     =   2
     MAX_LEN_HEAD   = 1024 * 4
 )
 
@@ -32,8 +34,8 @@ func NewClientConnection(c net.Conn) *ClientConnection {
 }
 
 func (this *ClientConnection) Send(buf []byte) {
-    head := make([]byte, 4)
-    binary.LittleEndian.PutUint32(head, uint32(len(buf)))
+    head := make([]byte, LEN_HEAD)
+    binary.LittleEndian.PutUint16(head, uint16(len(buf)))
     buf = append(head, buf...)
 
     select {
@@ -97,7 +99,7 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
 }
 
 func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
-    buff_head := make([]byte, 4)
+    buff_head := make([]byte, LEN_HEAD)
     if !this.duplexRead(buff_head) {
         return
     }
