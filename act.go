@@ -40,15 +40,15 @@ func main() {
     //go authServer.Start()
 
     salSendChan := make(chan *proto.SalPack, 1024)
-    clientBuffChan := make(chan *network.ClientBuff, 1024)
+    salRecvChan := make(chan *proto.SalPack, 1024)
 
     luaMgr := script.NewLuaMgr()
 
-    gs := network.NewGateServer(luaMgr, clientBuffChan, salSendChan)
+    gs := network.NewGateServer(luaMgr, salRecvChan, salSendChan)
     go gs.Start()
 
-    agent := network.NewSalAgent(salSendChan, clientBuffChan)
-    go agent.ReadFromSal()
+    agent := network.NewSalAgent(salRecvChan, salSendChan)
+    go agent.ReadFromSalProxy()
 
     handleSig()
 }

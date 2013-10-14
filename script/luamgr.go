@@ -153,13 +153,17 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     for {
         select {
             case pack := <-this.recvChan:
-                //fmt.Println("luamgr recv")
+                fmt.Println("luamgr recv")
                 h := pack.GetHeader()
                 uid, sid := h.GetUid(), h.GetSid()
-                pname := proto.URI2PROTO[pack.GetUri()].Name()[3:]
-                state := this.GetLuaState(sid)
-                state.stateInChan <- &StateInPack{float64(sid), float64(uid), pname,
-                                        string(pack.GetBin())}
+                if ptype, exist := proto.URI2PROTO[pack.GetUri()]; exist {
+                    pname := ptype.Name()[3:]
+                    state := this.GetLuaState(sid)
+                    state.stateInChan <- &StateInPack{float64(sid), float64(uid), pname,
+                                            string(pack.GetBin())}
+                } else {
+                    fmt.Println("not exist URI:", pack.GetUri())
+                }
 
             case pack := <-httpCb.GiftCbChan:
                 if sid, err := strconv.ParseUint(pack.GetSid(), 10, 64); err == nil {

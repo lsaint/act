@@ -14,26 +14,25 @@ type GateSendRecver interface {
 }
 
 
-type ClientBuff struct {
-    Uid         uint32    
-    Sid         uint32
-    Bin         []byte
-}
+//type ClientBuff struct {
+//    Uid         uint32    
+//    Sid         uint32
+//    Bin         []byte
+//}
 
 
 
 type GateServer struct {
-    clientBuffChan  chan *ClientBuff
     GateEntry       chan *proto.GateInPack
     GateExit        chan *proto.GateOutPack
     uid2buffer      map[uint32]*bytes.Buffer
     salSendChan     chan *proto.SalPack
+    salRecvChan     chan *proto.SalPack
 }
 
 func NewGateServer(sendrecver GateSendRecver, 
-                    clientBuffChan chan *ClientBuff,
-                    salSendChan chan *proto.SalPack) *GateServer {
-    gs := &GateServer{clientBuffChan: clientBuffChan,
+                    salRecvChan, salSendChan chan *proto.SalPack) *GateServer {
+    gs := &GateServer{ salRecvChan: salRecvChan,
                         salSendChan: salSendChan,
                         uid2buffer: make(map[uint32]*bytes.Buffer),
                         GateEntry: make(chan *proto.GateInPack, 1024),
@@ -44,29 +43,46 @@ func NewGateServer(sendrecver GateSendRecver,
 
 func (this *GateServer) Start() {
     fmt.Println("gate server running")
-    go this.processClientBuff()
+    go this.processSalRecvChan()
     go this.processGateExit()
 }
 
-func (this *GateServer) processClientBuff() {
+func (this *GateServer) processSalRecvChan() {
     for { select {
-        case client_buff := <-this.clientBuffChan:
-            uid := client_buff.Uid
+        case pack := <-this.salRecvChan:
+            fmt.Println("gate recv sal pack", len(pack.GetBin()))
+            uids := pack.GetUids()
+            sid  := pack.GetSid()
             var buffer *bytes.Buffer
-            buffer = this.uid2buffer[uid]
-            if buffer == nil {
-                this.uid2buffer[uid] = new(bytes.Buffer)
+            if len(uids) != 0 {
+                uid := uids[0]
+                buffer =  this.uid2buffer[uid]
+                if buffer == nil {
+                    buffer = new(bytes.Buffer)
+                    this.uid2buffer[uid] = buffer
+                }
+            } else {
+                // only process single user's msg
+                // no situation for client broadcast to server
+                fmt.Println("client broadcast server err", sid)
+                continue
             }
-            buffer.Write(client_buff.Bin)
+            buffer.Write(pack.GetBin())
+
             if buffer.Len() < LEN_HEAD { continue }
             length := int(binary.LittleEndian.Uint16(buffer.Bytes()[:LEN_HEAD]))
+            fmt.Println("length:", length, buffer.Len())
             if length > buffer.Len() + LEN_HEAD { continue }
 
+            fmt.Println("buffer left", buffer.Len())
             buffer.Next(LEN_HEAD)
+            fmt.Println("buffer left", buffer.Len())
             body := buffer.Next(length)
+            fmt.Println("buffer left", buffer.Len())
             uri := binary.LittleEndian.Uint32(body[:LEN_URI])
-            gheader := &proto.GateInHeader{Uid:pb.Uint32(client_buff.Uid), 
-                                            Sid: pb.Uint32(client_buff.Sid)}
+            fmt.Println("uri", uri)
+            gheader := &proto.GateInHeader{Uid:pb.Uint32(uids[0]), Sid: pb.Uint32(sid)}
+            fmt.Println("gheader", gheader)
             this.GateEntry <-&proto.GateInPack{Header: gheader, 
                                         Uri: pb.Uint32(uri), Bin: body[LEN_URI:]}
     }}
