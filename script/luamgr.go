@@ -193,7 +193,7 @@ func RegisterLuaFunction(LS *LuaState) {
     // arg4: uids       []uint32
     // return: nil
     Lua_SendMsg := func(L *lua.State) int {
-        uri := uint32(L.ToInteger(1))
+        uri := uint16(L.ToInteger(1))
         msg := L.ToString(2)
         sid := uint32(L.ToInteger(3))
         len_uids := int(L.ObjLen(4))
@@ -206,8 +206,8 @@ func RegisterLuaFunction(LS *LuaState) {
         }
         //fmt.Println(len(msg), uids, sid, uri)
 
-        uri_field := make([]byte, 4)
-        binary.LittleEndian.PutUint32(uri_field, uri)
+        uri_field := make([]byte, 2)
+        binary.LittleEndian.PutUint16(uri_field, uri)
         data := []byte(msg)
         data = append(uri_field, data...)
 

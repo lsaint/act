@@ -2,16 +2,17 @@
 
 Player = {}
 
-function Player:new(user_data)
+function Player:new(user_data, sid)
     self.__index = self
     local ins = setmetatable({}, self)
     ins.user = user_data
+    ins.sid = sid
     ins:init()
     return ins      
 end
 
 function Player:SendMsg(pname, msg)
-    SendMsg(pname, msg, {self.uid}, 0)
+    SendMsg(pname, msg, {self.uid}, self.sid)
 end
 
 function Player:init()

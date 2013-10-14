@@ -22,10 +22,8 @@ const (
 type SalAgent   struct {
     cc      *ClientConnection
     buffChan    chan []byte
-    
     salRecvChan   chan *proto.SalPack
     salSendChan   chan *proto.SalPack
-
 }
 
 
@@ -41,12 +39,13 @@ func NewSalAgent(salRecvChan, salSendChan  chan *proto.SalPack) *SalAgent {
                 salRecvChan: salRecvChan}
     agent.registerAgent()
     go agent.doRecv()
+    go agent.doSend()
     return agent
 }
 
 func (this *SalAgent) registerAgent() {
     reg := make([]byte, LEN_URI)
-    binary.LittleEndian.PutUint32(reg, uint32(URI_REGISTER))
+    binary.LittleEndian.PutUint16(reg, uint16(URI_REGISTER))
     this.cc.Send(reg)    
 }
 
@@ -78,8 +77,9 @@ func (this *SalAgent) doSend() {
     for pack := range this.salSendChan {
         if data, err := pb.Marshal(pack); err == nil {
             uri_field := make([]byte, LEN_URI)
-            binary.LittleEndian.PutUint32(uri_field, uint32(URI_TRANSPORT))
-            data = append(data, uri_field...)
+            binary.LittleEndian.PutUint16(uri_field, uint16(URI_TRANSPORT))
+            data = append(uri_field, data...)
+            fmt.Println("send to sal proxy", len(data))
             this.cc.Send(data)
         }
     }

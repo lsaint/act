@@ -12,7 +12,7 @@ import (
 const (
     MAX_LEN_HEAD    = 1024 * 4
     LEN_HEAD        = 2
-    LEN_URI         = 4
+    LEN_URI         = 2
 )
 
 type ClientConnection struct {

@@ -14,13 +14,6 @@ type GateSendRecver interface {
 }
 
 
-//type ClientBuff struct {
-//    Uid         uint32    
-//    Sid         uint32
-//    Bin         []byte
-//}
-
-
 
 type GateServer struct {
     GateEntry       chan *proto.GateInPack
@@ -71,20 +64,15 @@ func (this *GateServer) processSalRecvChan() {
 
             if buffer.Len() < LEN_HEAD { continue }
             length := int(binary.LittleEndian.Uint16(buffer.Bytes()[:LEN_HEAD]))
-            fmt.Println("length:", length, buffer.Len())
             if length > buffer.Len() + LEN_HEAD { continue }
 
-            fmt.Println("buffer left", buffer.Len())
             buffer.Next(LEN_HEAD)
-            fmt.Println("buffer left", buffer.Len())
-            body := buffer.Next(length)
-            fmt.Println("buffer left", buffer.Len())
-            uri := binary.LittleEndian.Uint32(body[:LEN_URI])
-            fmt.Println("uri", uri)
+            body := make([]byte, length)
+            buffer.Read(body)
+            uri := binary.LittleEndian.Uint16(body[:LEN_URI])
             gheader := &proto.GateInHeader{Uid:pb.Uint32(uids[0]), Sid: pb.Uint32(sid)}
-            fmt.Println("gheader", gheader)
             this.GateEntry <-&proto.GateInPack{Header: gheader, 
-                                        Uri: pb.Uint32(uri), Bin: body[LEN_URI:]}
+                                        Uri: pb.Uint32(uint32(uri)), Bin: body[LEN_URI:]}
     }}
 }
 
@@ -96,6 +84,7 @@ func (this *GateServer) processGateExit() {
             binary.LittleEndian.PutUint16(data, uint16(len(bin)))
             data = append(data, bin...)
             pack := &proto.SalPack{Sid: gop.Sid, Uids: gop.Uids, Bin: data}
+            fmt.Println("gate send pack", pack)
             this.salSendChan <- pack
      }}
 }
