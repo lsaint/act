@@ -4,7 +4,7 @@ import (
     "reflect"
 )
 
-type Uri2Proto map[uint32]reflect.Type
+type Uri2Proto map[uint16]reflect.Type
 
 var URI2PROTO Uri2Proto = Uri2Proto {
     0       :   reflect.TypeOf(C2SLogout{}),
@@ -19,11 +19,11 @@ var URI2PROTO Uri2Proto = Uri2Proto {
 }
 
 
-type Proto2Uri map[reflect.Type]uint32
+type Proto2Uri map[reflect.Type]uint16
 var PROTO2URI Proto2Uri
 
 func init() {
-    PROTO2URI = make(map[reflect.Type]uint32)
+    PROTO2URI = make(map[reflect.Type]uint16)
     for uri, proto_type := range URI2PROTO {
         PROTO2URI[proto_type] = uri
     }

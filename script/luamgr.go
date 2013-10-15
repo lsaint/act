@@ -156,7 +156,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
                 //fmt.Println("luamgr recv")
                 h := pack.GetHeader()
                 uid, sid := h.GetUid(), h.GetSid()
-                pname := proto.URI2PROTO[pack.GetUri()].Name()[3:]
+                pname := proto.URI2PROTO[uint16(pack.GetUri())].Name()[3:]
                 state := this.GetLuaState(sid)
                 state.stateInChan <- &StateInPack{float64(sid), float64(uid), pname,
                                         string(pack.GetBin())}

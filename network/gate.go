@@ -85,13 +85,13 @@ func (this *GateServer) parse() {
                     continue
                 }
 
-                uri := binary.LittleEndian.Uint32(msg[:4])
+                uri := binary.LittleEndian.Uint16(msg[:LEN_URI])
                 var gheader *proto.GateInHeader
                 if uri == 1 { // Login
                     pb_msg := reflect.New(proto.URI2PROTO[uri]).Interface().(pb.Message)
-                    err := pb.Unmarshal(msg[4:], pb_msg)
+                    err := pb.Unmarshal(msg[LEN_URI:], pb_msg)
                     if err != nil {
-                        fmt.Println("pb Unmarshal", err)
+                        fmt.Println("pb Unmarshal err", err)
                         break
                     }
                     gheader = this.Login(conn, pb_msg)
@@ -102,7 +102,8 @@ func (this *GateServer) parse() {
                     gheader = this.conn2gheader[conn]
                 }
                 //fmt.Println("gate entry", uri)
-                this.GateEntry <-&proto.GateInPack{Header: gheader, Uri: pb.Uint32(uri), Bin: msg[4:]}
+                this.GateEntry <-&proto.GateInPack{Header: gheader, 
+                                            Uri: pb.Uint32(uint32(uri)), Bin: msg[LEN_URI:]}
 
             case gop := <-this.GateExit :
                 //fmt.Println("gateout:", gop.GetSid(), gop.GetUids(), len(gop.GetBin()))
