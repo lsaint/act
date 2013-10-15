@@ -64,7 +64,7 @@ func (this *GateServer) processSalRecvChan() {
 
             if buffer.Len() < LEN_HEAD { continue }
             length := int(binary.LittleEndian.Uint16(buffer.Bytes()[:LEN_HEAD]))
-            if length > buffer.Len() + LEN_HEAD { continue }
+            if length > buffer.Len() { continue }
 
             buffer.Next(LEN_HEAD)
             body := make([]byte, length)
