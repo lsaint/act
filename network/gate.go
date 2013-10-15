@@ -43,7 +43,6 @@ func (this *GateServer) Start() {
 func (this *GateServer) processSalRecvChan() {
     for { select {
         case pack := <-this.salRecvChan:
-            fmt.Println("gate recv sal pack", len(pack.GetBin()))
             uids := pack.GetUids()
             sid  := pack.GetSid()
             var buffer *bytes.Buffer
@@ -84,7 +83,6 @@ func (this *GateServer) processGateExit() {
             binary.LittleEndian.PutUint16(data, uint16(len(bin)))
             data = append(data, bin...)
             pack := &proto.SalPack{Sid: gop.Sid, Uids: gop.Uids, Bin: data}
-            fmt.Println("gate send pack", pack)
             this.salSendChan <- pack
      }}
 }

@@ -53,7 +53,6 @@ func (this *SalAgent) ReadFromSalProxy() {
     fmt.Println("sal agent running")
     for {
         if buff, ok := this.cc.duplexReadBody(); ok {
-            fmt.Println("read from sal proxy", len(buff))
             this.buffChan <- buff
         } else {
             panic("disconnect from sal frontend")
@@ -79,7 +78,6 @@ func (this *SalAgent) doSend() {
             uri_field := make([]byte, LEN_URI)
             binary.LittleEndian.PutUint16(uri_field, uint16(URI_TRANSPORT))
             data = append(uri_field, data...)
-            fmt.Println("send to sal proxy", len(data))
             this.cc.Send(data)
         }
     }
