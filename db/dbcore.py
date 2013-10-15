@@ -33,6 +33,8 @@ def randomPunish(**kwargs):
     ret = []
     for p in pos:
         ret.append(db.punish.find({}, {"_id": 0}).skip(p).limit(1).next())
+    for i in range(count):
+        ret[i]["_id"] = str(i+1)
     return ret, None
 
 
@@ -45,3 +47,4 @@ def saveGift(**kwargs):
     db.gift.update({"orderid": kwargs["orderid"]}, {"$set": kwargs}, upsert=True)
     return {}, None
 
+print randomPunish(count=4)
