@@ -5,6 +5,7 @@ Player = {}
 function Player:new(user_data, sid)
     self.__index = self
     local ins = setmetatable({}, self)
+    ins.lastping = os.time()
     ins.user = user_data
     ins.sid = sid
     ins:init()

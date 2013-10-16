@@ -24,6 +24,7 @@ function GameRoom.init(self)
     self.scores = {0, 0}
     self.round_info = {} -- {presenter, round_number}
     self.timer = Timer:new(self.sid)
+    self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.sid, self.presenters)
 end
@@ -348,5 +349,26 @@ function GameRoom.OnLogout(self, player, req)
         end
     end
     self.uid2player[player.uid] = nil
+end
+
+function GameRoom.OnPing(self, player, req)
+    player:SendMsg("S2CPingRep", {})
+    player.lastping = os.time()
+end
+
+function GameRoom.checkPing(self)
+    print("checkping")
+    local now = os.time()
+    for uid, player in pairs(self.uid2player) do
+        if now - player.lastping > PING_LOST then
+            print("ping lost", uid)
+            self:OnLogout(player)
+        end
+    end
+end
+
+function GameRoom.OnInvildProto(self, uid, pname)
+    print("not login yet", uid, pname)
+    self:SendMsg("S2CReLogin", {}, {uid})
 end
 
