@@ -25,8 +25,8 @@ local function WatchDog()
             if pname == "Login" then
                 player = Player:new(req.user)
                 room.uid2player[uid] = player
-            else
-                print("not login yet", uid, pname)
+            elseif pname ~= "Logout" then
+                room:OnInvildProto(uid, pname)
                 return
             end
         end
