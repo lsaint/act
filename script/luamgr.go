@@ -153,7 +153,6 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     for {
         select {
             case pack := <-this.recvChan:
-                fmt.Println("luamgr recv")
                 h := pack.GetHeader()
                 uid, sid := h.GetUid(), h.GetSid()
                 if ptype, exist := proto.URI2PROTO[pack.GetUri()]; exist {
