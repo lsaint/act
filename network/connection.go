@@ -102,7 +102,6 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
         return
     }
     len_head := binary.LittleEndian.Uint16(buff_head)
-    fmt.Println("len_head", uint16(len_head))
     if len_head > MAX_LEN_HEAD {
         fmt.Println("message len too long", len_head)
         this.Close()
