@@ -122,18 +122,18 @@ end
 
 function GameRoom.roundStart(self)
     print("RoundStart")
-    local a, b = self.presenters[1],  self.presenters[2]
-
-    self:doRound(a, 1)
+    local motions = RandomMotion()
+    if motions == nil then return end
+    self:doRound(self:A(), 1, motions[1])
     for ar = 2, ROUND_COUNT do
-        self.timer:settimer(ROUND_TIME * (ar-1), 1, self.doRound, self, a, ar)
+        self.timer:settimer(ROUND_TIME * (ar-1), 1, self.doRound, self, self:A(), ar, motions[ar])
     end
 
     self.timer:settimer(ROUND_COUNT * ROUND_TIME, 1, self.notifyA2B, self)
     local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
     for br = 1, ROUND_COUNT do
         local t = a_total_time + ROUND_TIME * (br - 1)
-        self.timer:settimer(t, 1, self.doRound, self, b, br)
+        self.timer:settimer(t, 1, self.doRound, self, self:B(), br, motions[br])
     end
 
     local round_end_time = a_total_time + ROUND_TIME * ROUND_COUNT + 1
@@ -143,9 +143,8 @@ function GameRoom.roundStart(self)
     self.timer:settimer(BC_SCORE_INTERVAL, notify_score_count, self.notifyScore, self)
 end
 
-function GameRoom.doRound(self, presenter, r)
+function GameRoom.doRound(self, presenter, r, m)
     print("DoRound", r)
-    local m = RandomMotion()
     self.round_info = {presenter, r, m, os.time()}
     self.guess = Guess:new(m)
     local bc = {
