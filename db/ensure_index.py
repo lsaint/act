@@ -9,5 +9,6 @@ db.authenticate(name, pw)
 
 print db.punish.ensure_index("desc")
 print db.motion.ensure_index("desc")
+print db.motion.ensure_index("type")
 print db.gift.ensure_index("orderid")
 
