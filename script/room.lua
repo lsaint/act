@@ -150,7 +150,7 @@ function GameRoom.doRound(self, presenter, r, m)
     local bc = {
         presenter = {uid = presenter.uid},
         round = r,
-        mot = {desc = m.desc},
+        mot = m,
         time = ROUND_TIME,
     }   
     self:Broadcast("S2CNotifyRoundStart", bc)

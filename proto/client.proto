@@ -39,6 +39,7 @@ message Punishment {
 message Motion {
     optional string _id = 1;
     required string desc = 2;
+    required uint32 type = 3;
 }
 
 message GameGift {
