@@ -133,7 +133,7 @@ function GameRoom.roundStart(self)
     local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
     for br = 1, ROUND_COUNT do
         local t = a_total_time + ROUND_TIME * (br - 1)
-        self.timer:settimer(t, 1, self.doRound, self, self:B(), br, motions[br])
+        self.timer:settimer(t, 1, self.doRound, self, self:B(), br, motions[br+ROUND_COUNT])
     end
 
     local round_end_time = a_total_time + ROUND_TIME * ROUND_COUNT + 1
