@@ -32,7 +32,7 @@ function Timer:update()
             end
             v[4](unpack(v, 5))
         end
-        if count ~= nil and count - 1 < 0 then
+        if count ~= nil and count <= 1 then
             self:rmtimer(k)
         end
     end
