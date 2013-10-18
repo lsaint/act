@@ -108,7 +108,7 @@ function GiftMgr:sortPower(to_sort, top_n)
     for i, v in ipairs(sorted) do
         if v[2] ~= 0 then 
             local u = v[1]
-            local n = self.uid2givername[uid] or ""
+            local n = self.uid2givername[u] or ""
             table.insert(ret, {user={uid=u, name=n}, s=v[2]})
             if i >= top_n then break end
         end
