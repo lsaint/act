@@ -277,6 +277,7 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     if giver then 
         gname = giver.name 
         guid = giver.uid
+        self.giftmgr:sign(guid, gname)
     end
     local bc = {
         giver = {name = gname, uid = guid},
