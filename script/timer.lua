@@ -31,9 +31,10 @@ function Timer:update()
                 v[3] = count - 1
             end
             v[4](unpack(v, 5))
-        end
-        if count ~= nil and count <= 1 then
-            self:rmtimer(k)
+
+            if count ~= nil and count <= 1 then
+                self:rmtimer(k)
+            end
         end
     end
 end
