@@ -24,7 +24,8 @@ function GameRoom.init(self)
     self.scores = {0, 0}
     self.round_info = {} -- {presenter, round_number}
     self.timer = Timer:new(self.sid)
-    self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
+    --self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
+    self:checkPing()
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.sid, self.presenters)
 end
@@ -352,7 +353,7 @@ function GameRoom.OnLogout(self, player, req)
 end
 
 function GameRoom.OnPing(self, player, req)
-    player:SendMsg("S2CPingRep", {})
+    --player:SendMsg("S2CPingRep", {})
     player.lastping = os.time()
 end
 
