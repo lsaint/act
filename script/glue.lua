@@ -1,3 +1,4 @@
+package.path = "./conf/?.txt;" .. package.path
 package.path = "./script/?.lua;" .. package.path
 package.path = "./db/?.lua;" .. package.path
 package.path = "./script/lib/?.lua;" .. package.path
@@ -10,6 +11,7 @@ parser = require "parser"
 
 watchdog = require "watchdog"
 
+require "config"
 require "timer"
 require "uri"
 require "db"

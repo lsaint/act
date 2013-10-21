@@ -12,13 +12,13 @@ import (
     pb "code.google.com/p/goprotobuf/proto"
     "github.com/aarzilli/golua/lua"
 
+    "act/common"
     "act/proto"
     "act/postman"
 )
 
 var SN int64
 const (
-    MAX_STATE = 2
     PROTO_INVOKE = iota
     UPDATE_INVOKE = iota
     CB_INVOKE = iota
@@ -147,7 +147,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     this.sendChan, this.recvChan = out, in
     httpCb := postman.NewHttpCb()
     go httpCb.Start()
-    for i:=0; i<MAX_STATE; i++ {
+    for i:=0; i<int(common.CF.GetMaxState()); i++ {
         this.hash2state[uint32(i)] = NewLuaState(this.sendChan)
     }
     for {
@@ -171,7 +171,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
 }
 
 func (this *LuaMgr)GetLuaState(sid uint32) *LuaState {
-    hash := sid % MAX_STATE   
+    hash := sid % common.CF.GetMaxState()   
     state, exist := this.hash2state[hash] 
     if !exist {
        state = NewLuaState(this.sendChan)

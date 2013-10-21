@@ -1,6 +1,5 @@
 
 require "utility"
-require "const"
 require "guess"
 require "gift"
 require "db"
