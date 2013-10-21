@@ -1,4 +1,3 @@
-
 APPID = 114269
 SRVID = 1
 DB_URL = "http://localhost:8081/"
@@ -24,3 +23,8 @@ TIME_NOW = 1
 PING_LOST = 60
 CHECK_PING_INTERVAL = PING_LOST + 2
 
+
+MAX_STATE = 2
+MONGO_SRV = "localhost"
+MONGO_USR = "lsaint"
+MONGO_PSW = "111333"

@@ -6,9 +6,10 @@ from datetime import datetime
 from pymongo import MongoClient
 
 
-client = MongoClient("localhost", 27017)
+execfile("../conf/config.txt")
+client = MongoClient(MONGO_SRV, 27017)
 db = client.act
-db.authenticate("lsaint", "111333")
+db.authenticate(MONGO_USR, MONGO_PSW)
 
 
 def T():
@@ -47,4 +48,3 @@ def saveGift(**kwargs):
     db.gift.update({"orderid": kwargs["orderid"]}, {"$set": kwargs}, upsert=True)
     return {}, None
 
-print randomPunish(count=4)
