@@ -147,7 +147,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     this.sendChan, this.recvChan = out, in
     httpCb := postman.NewHttpCb()
     go httpCb.Start()
-    for i:=0; i<int(common.CF.GetMaxState()); i++ {
+    for i:=0; i<int(common.CF.MaxState); i++ {
         this.hash2state[uint32(i)] = NewLuaState(this.sendChan)
     }
     for {
@@ -171,7 +171,7 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
 }
 
 func (this *LuaMgr)GetLuaState(sid uint32) *LuaState {
-    hash := sid % common.CF.GetMaxState()   
+    hash := sid % common.CF.MaxState
     state, exist := this.hash2state[hash] 
     if !exist {
        state = NewLuaState(this.sendChan)
