@@ -12,12 +12,19 @@ func init() {
 
 type Config struct {
     L       *lua.State
+
+    MaxState    uint32
 }
 
 func NewConfig() *Config {
-    ls := &Config{L: lua.NewState()}
-    ls.ReadConfig()
-    return ls
+    ls := lua.NewState()
+    cf := &Config{L: ls}
+    cf.ReadConfig()
+
+    ls.GetGlobal("MAX_STATE")
+    cf.MaxState = uint32(ls.ToInteger(-1))
+
+    return cf
 }
 
 func (this *Config) ReadConfig() {
@@ -26,10 +33,4 @@ func (this *Config) ReadConfig() {
         fmt.Println(err)
         panic("read config err")
     }
-}
-
-func (this *Config) GetMaxState() uint32 {
-    this.L.GetGlobal("MAX_STATE")
-    count := this.L.ToInteger(-1)
-    return uint32(count)
 }
