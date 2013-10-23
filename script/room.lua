@@ -12,13 +12,13 @@ function GameRoom.new(sid)
     self.sid = sid
     self.uid2player = {}
     self.status = "Ready"
+    self.presenters = {}
     self:init()
     return self
 end
 
 function GameRoom.init(self)
     print("init")
-    self.presenters = {}
     self.over = {}
     self.scores = {0, 0}
     self.round_info = {} -- {presenter, round_number}
@@ -61,6 +61,8 @@ function GameRoom.OnLogin(self, player, req)
     rep.user.power = self.giftmgr:getPower(player.uid)
     player:SendMsg("S2CLoginRep", rep)
 
+    player:SendMsg("S2CNotifyPrelude", self:getPrelude())
+
     if self.status == "Poll" then
         player:SendMsg("S2CNotfiyPunishOptions", 
             {options = self.giftmgr.options, loser = self:getLoser().user})
@@ -81,42 +83,107 @@ function GameRoom.OnLogin(self, player, req)
     end
 end
 
-function GameRoom.OnStartGame(self, player, req)
-    if req.presenter.role == "PresenterA" then
-        self.presenters[1] = player
-    elseif req.presenter.role == "PresenterB" then
-        self.presenters[2] = player
-    else
-        return
+--function GameRoom.OnStartGame(self, player, req)
+function GameRoom.OnPrelude(self, player, req)
+    print("prelude", player.uid, req.user.role)
+    local r = self:updateRole(player, req)
+    if r == "OK" then
+        self:Broadcast("S2CNotifyPrelude", self:getPrelude())
     end
-    self.uid2player[player.uid].role = req.presenter.role
 
-    local rep = {ret = "WAIT_OTHER"}
-    if #self.presenters == 2 then    
-        if self.presenters[1].uid == self.presenters[2].uid then
+    local a, b = self:A(), self:B()
+    if a and b then    
+        if a.uid == b.uid then
             print("same presenter error")
             self:OnStopGame()
             return
         end
-        print("start sucess", self.sid)
-        self:notifyStatus("Round")
-        self.timer:settimer(5, 1, self.roundStart, self)
-        self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
-        self.giftmgr.presenters = self.presenters
-        rep.ret = "OK"
-    else 
-        print("waiting other")
-        local p = self.presenters[#self.presenters] or self.presenters[2]
-        local bc = {presenter = {uid = p.uid}}
-        self:Broadcast("S2CNotifyReady", bc)
+        if a.role == "PresenterA" and b.role == "PresenterB" then
+            print("start sucess", self.sid)
+            self:notifyStatus("Round")
+            self.timer:settimer(5, 1, self.roundStart, self)
+            self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
+            self.giftmgr.presenters = self.presenters
+        end
     end
-    player:SendMsg("S2CStartGameRep", rep)
 end
 
-function GameRoom.OnUnReady(self, player, req)
-    if self.status == "Ready" then
-        table.remove(self.presenters, 2)
+function GameRoom.updateRole(self, player, req)
+    local role, uid = req.user.role, player.uid
+    local a, b = self:A(), self:B()
+    local r = nil
+
+    if a then
+        if a.role == "CandidateA" and role == "PresenterA" and uid == a.uid then
+            r = "OK"
+            a.role = role
+        end
+        print(a.role == "CandidateA", role == "Attendee", uid == a.uid)
+        if a.role == "CandidateA" and role == "Attendee" and uid == a.uid then
+            r = "OK"
+            a.role = role
+            table.remove(self.presenters, 1)
+        end
+        if a.role == role and role == "CandidateA" then
+            r = "OCCUPY"
+        end
+    else
+        if role == "CandidateA" then
+            r = "OK"
+            player.role = role
+            self.presenters[1] = player
+        end
     end
+
+    if r then 
+        player:SendMsg("S2CPreludeRep", {ret = r})
+        print("reply prelude", uid, role, r)
+        return r
+    end
+
+    if b then
+        if b.role == "CandidateB" and role == "PresenterB" and uid == b.uid then
+            r = "OK"
+            b.role = role
+        end
+        if b.role == "CandidateB" and role == "Attendee" and uid == b.uid then
+            r = "OK"
+            b.role = role
+            table.remove(self.presenters, #self.presenters)
+        end
+        if b.role == role and role == "CandidateB" then
+            r = "OCCUPY"
+        end
+    else
+        if role == "CandidateB" then
+            r = "OK"
+            player.role = role
+            self.presenters[2] = player
+        end
+    end
+
+    if not r then
+        r = "FL"
+        print("update role FL")
+    end 
+    player:SendMsg("S2CPreludeRep", {ret = r})
+    print("reply prelude", uid, role, r)
+    return r
+end
+
+function GameRoom.getPrelude(self)
+    local a, b = self:A(), self:B()
+    local rep = {}
+    if not a and not b then
+        return rep
+    elseif a and b then
+        rep = {a = {uid = a.uid, role = a.role}, b = {uid = b.uid, role = b.role}}
+    elseif not b then
+        rep = {a = {uid = a.uid, role = a.role}}
+    else
+        rep = {b = {uid = b.uid, role = b.role}}
+    end
+    return rep
 end
 
 function GameRoom.roundStart(self)
@@ -229,8 +296,7 @@ end
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
     if player then  
-        if self.status ~= "Ready" and player.uid ~= self:A().uid and
-                player.uid ~= self:B().uid then
+        if self.status ~= "Ready" and self:A().uid ~= player.uid and self:B().uid ~= player.uid then
             print("not presenter stop game")
             return
         end
@@ -239,10 +305,9 @@ function GameRoom.OnStopGame(self, player, req)
     end
     self:notifyStatus("Ready")
 
-    for i, v in ipairs(self.presenters) do
-        local p = self.uid2player[v.uid]
-        if p then p.role = "Attendee" end
-    end
+    if self:A() then self:A().role = "CandidateA" end
+    if self:B() then self:B().role = "CandidateB" end
+    self:Broadcast("S2CNotifyPrelude", self:getPrelude())
     self:init()
 end
 
@@ -348,10 +413,17 @@ end
 function GameRoom.OnLogout(self, player, req)
     if not player then return end
     print("OnLogout", player.uid, player.role)
-    if player:isPresenter() then 
+    if player:isAorB() then 
         if self.status ~= "Ready" then
             self:OnStopGame(player)
         end
+        if self:A() and player.uid == self:A().uid then
+            table.remove(self.presenters, 1)
+        end
+        if self:B() and player.uid == self:B().uid then
+            table.remove(self.presenters, #self.presenters)
+        end
+        self:Broadcast("S2CNotifyPrelude", self:getPrelude())
     end
     self.uid2player[player.uid] = nil
 end

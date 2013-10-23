@@ -30,8 +30,6 @@ function GiftMgr:new(sid, presenters)
     ins.presenters = presenters
     ins.powers = {} -- {uid=power}
     ins.gift_score = {}
-    ins.gift_score[presenters[1].uid] = 0
-    ins.gift_score[presenters[2].uid] = 0
     ins.uid2givername = {}
     ins.camps = {{}, {}} -- {camp_a_powers, camp_b_powers}
     ins.options = {}
