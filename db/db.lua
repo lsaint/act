@@ -30,3 +30,17 @@ function SaveGift(dt)
     return ret.error == json.null
 end
 
+
+function SaveRoundSidInfo(dt)
+    local req = {params = {dt}, method="saveRoundSidInfo", id = 4}
+    local ret = json.decode(GoPost(DB_URL, json.encode(req)))
+    return ret.error == json.null
+end
+
+
+function SaveRoundUidInfo(dt)
+    local req = {params = {dt}, method="saveRoundUidInfo", id = 5}
+    local ret = json.decode(GoPost(DB_URL, json.encode(req)))
+    return ret.error == json.null
+end
+

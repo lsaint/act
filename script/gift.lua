@@ -10,7 +10,14 @@ local GiftPower = {
     [1014] = 80,
     [1015] = 80,
 }
-local SN = 0
+
+local GiftScore = {
+    [1009] = 690,
+    [1001] = 10,
+    [1010] = 1990,
+    [1012] = 890,
+    [1013] = 10,
+}
 
 
 GiftMgr = {}
@@ -22,6 +29,9 @@ function GiftMgr:new(sid, presenters)
     ins.sid = sid
     ins.presenters = presenters
     ins.powers = {} -- {uid=power}
+    ins.gift_score = {}
+    ins.gift_score[presenters[1].uid] = 0
+    ins.gift_score[presenters[2].uid] = 0
     ins.uid2givername = {}
     ins.camps = {{}, {}} -- {camp_a_powers, camp_b_powers}
     ins.options = {}
@@ -78,6 +88,12 @@ function GiftMgr:increasePower(uid, touid, gid, gcount)
     if not o then return end
     cur_p = self.camps[o].uid or 1
     self.camps[o][uid] = cur_p + p
+end
+
+function GiftMgr:increaseGiftScore(touid, gid, gcount)
+    local s = self.gift_score[touid]
+    if not s then return end
+    self.gift_score[touid] = s + GiftScore[gid] * gcount
 end
 
 function GiftMgr:getPower(uid)
