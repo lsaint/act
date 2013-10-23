@@ -48,3 +48,16 @@ def saveGift(**kwargs):
     db.gift.update({"orderid": kwargs["orderid"]}, {"$set": kwargs}, upsert=True)
     return {}, None
 
+
+def saveRoundSidInfo(**kwargs):
+    kwargs["time"] = T()
+    db.rank_sid.insert(kwargs)
+    return {}, None
+
+
+def saveRoundUidInfo(**kwargs):
+    kwargs["time"] = T()
+    db.rank_uid.insert(kwargs)
+    return {}, None
+
+

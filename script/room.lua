@@ -200,6 +200,14 @@ function GameRoom.punishStart(self)
     print("punishStart")
     self:notifyStatus("Punish")
     self:Broadcast("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
+
+    local auid, buid = self:A().uid, self:B().uid
+    local ag1, bg1 = self.scores[1], self.scores[2]
+    local ag2 = self.giftmgr.gift_score[auid] or 0
+    local bg2 = self.giftmgr.gift_score[buid] or 0
+    SaveRoundSidInfo({sid=self.sid, game_score=ag1+bg1, gift_score=ag2+bg2, total=ag1+ag2+bg1+bg2})
+    SaveRoundUidInfo({uid=auid, game_score=ag1, gift_score=ag2, total=ag1+ag2})
+    SaveRoundUidInfo({uid=buid, game_score=bg1, gift_score=bg2, total=bg1+bg2})
 end
 
 function GameRoom.OnPunishOver(self, player, req)
@@ -263,6 +271,7 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     end
     if self.status ~= "Ready" then
         self.giftmgr:increasePower(from_uid, to_uid, gid, gcount)
+        self.giftmgr:increaseGiftScore(to_uid, gid, gcount)
     end
     GiftMgr.orderid2req[orderid] = nil
 
