@@ -3,14 +3,17 @@ package proto;
 // enmu
 enum GameRole {
     Attendee = 0;
-    PresenterA = 1;
-    PresenterB = 2;
+    CandidateA = 1;
+    CandidateB = 2;
+    PresenterA = 3;
+    PresenterB = 4;
 }
 
 enum Result {
     OK = 0;
     FL = 1;
-    WAIT_OTHER = 101;
+    WAIT_OTHER  = 101;
+    OCCUPY      = 102;
 }
 
 enum GameStatus {
@@ -71,24 +74,40 @@ message S2CLoginRep {
     required UserData user = 3;
 }
 
-// 2 其中1位主播点击准备就绪 
-message C2SStartGame {
-    required UserData presenter = 1;
+// 2
+message C2SPrelude {
+    required UserData user = 1;
 }
 
-// 8 二麦变动
-message C2SUnReady {
-}
-
-// 1002  
-message S2CStartGameRep {
+// 1002
+message S2CPreludeRep {
      required Result ret = 1;
 }
 
-// 2006 广播其中1位主持人点击了开始
-message S2CNotifyReady {
-    required UserData presenter = 1;
+// 2006
+message S2CNotifyPrelude {
+    optional UserData a = 1;
+    optional UserData b = 2;
 }
+
+//// 2 其中1位主播点击准备就绪 
+//message C2SStartGame {
+//    required UserData presenter = 1;
+//}
+//
+//// 8 二麦变动
+//message C2SUnReady {
+//}
+//
+//// 1002  
+//message S2CStartGameRep {
+//     required Result ret = 1;
+//}
+//
+//// 2006 广播其中1位主持人点击了开始
+//message S2CNotifyReady {
+//    required UserData presenter = 1;
+//}
 
 // 2001  游戏状态变更通知
 message S2CNotifyStatus {
@@ -168,9 +187,9 @@ message S2CNotifyPunishOver {
     required UserData presenter = 1;
 }
 
-// 6 客户端各种异常引发的游戏终止
+// 6 主播点击终止游戏
 message C2SStopGame {
-    required uint32 reason = 1;
+    required UserData presenter = 1;
 }
 
 // 7 获取送礼token

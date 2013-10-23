@@ -25,7 +25,8 @@ function Player:init()
     self.role           =          self.user.role       
 end
 
-function Player:isPresenter()
-    return string.find(self.role, "Presenter") ~= nil
+function Player:isAorB()
+    return string.find(self.role, "Presenter") ~= nil or
+            string.find(self.role, "Candidate") ~= nil
 end
 
