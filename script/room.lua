@@ -23,8 +23,8 @@ function GameRoom.init(self)
     self.scores = {0, 0}
     self.round_info = {} -- {presenter, round_number}
     self.timer = Timer:new(self.sid)
-    --self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
-    self:checkPing()
+    self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
+    --self:checkPing()
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.sid, self.presenters)
 end
@@ -200,7 +200,6 @@ function GameRoom.notifyA2B(self)
 end
 
 function GameRoom.notifyScore(self)
-    print("notifyScore", self.scores[1], self.scores[2])
     local bc = {scores = self.scores}
     self:Broadcast("S2CNotifyScores", bc)
 end
@@ -355,13 +354,11 @@ function GameRoom.OnChat(self, player, req)
 end
 
 function  GameRoom.addScore(self)
-    print("addScore")
     if self.round_info[1] == self.presenters[1] then
         self.scores[1] = self.scores[1] + BINGO_SCORE
     elseif self.round_info[1] == self.presenters[2] then
         self.scores[2] = self.scores[2] + BINGO_SCORE
     end
-    print(table.concat(self.scores, " : "))
 end
 
 function GameRoom.getLoser(self)
