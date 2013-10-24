@@ -88,8 +88,8 @@ end
 function GameRoom.OnPrelude(self, player, req)
     print("prelude", player.uid, req.user.role)
     local a, b = self:A(), self:B()
-    local r1 = self:updateRole(player, a, req.user.role, "CandidateA", "PresenterA", 1)
-    local r2 = self:updateRole(player, b, req.user.role, "CandidateB", "PresenterB", 2)
+    local r1 = self:updateRole(player, a, req.user.role, "CandidateA", "PresenterA", 1, b)
+    local r2 = self:updateRole(player, b, req.user.role, "CandidateB", "PresenterB", 2, a)
     if r1 or r2 then
         self:Broadcast("S2CNotifyPrelude", self:getPrelude())
     else
@@ -98,11 +98,6 @@ function GameRoom.OnPrelude(self, player, req)
     end
 
     if a and b then    
-        if a.uid == b.uid then
-            print("same presenter error")
-            self:OnStopGame()
-            return
-        end
         if a.role == "PresenterA" and b.role == "PresenterB" then
             print("start sucess", self.sid)
             self:notifyStatus("Round")
@@ -113,7 +108,7 @@ function GameRoom.OnPrelude(self, player, req)
     end
 end
 
-function GameRoom.updateRole(self, player, cur, role, ca, pr, idx)
+function GameRoom.updateRole(self, player, cur, role, ca, pr, idx, oth)
     local r, uid = nil, player.uid
 
     if cur then
@@ -133,7 +128,7 @@ function GameRoom.updateRole(self, player, cur, role, ca, pr, idx)
             r = "OCCUPY"
         end
     else
-        if role == ca then
+        if role == ca and oth ~= player then
             r = "OK"
             player.role = role
             self.presenters[idx] = player
