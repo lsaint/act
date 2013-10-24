@@ -87,12 +87,16 @@ end
 --function GameRoom.OnStartGame(self, player, req)
 function GameRoom.OnPrelude(self, player, req)
     print("prelude", player.uid, req.user.role)
-    local r = self:updateRole(player, req)
-    if r == "OK" then
+    local a, b = self:A(), self:B()
+    local r1 = self:updateRole(player, a, req.user.role, "CandidateA", "PresenterA", 1)
+    local r2 = self:updateRole(player, b, req.user.role, "CandidateB", "PresenterB", 2)
+    if r1 or r2 then
         self:Broadcast("S2CNotifyPrelude", self:getPrelude())
+    else
+        print("update role FL")
+        return 
     end
 
-    local a, b = self:A(), self:B()
     if a and b then    
         if a.uid == b.uid then
             print("same presenter error")
@@ -109,66 +113,37 @@ function GameRoom.OnPrelude(self, player, req)
     end
 end
 
-function GameRoom.updateRole(self, player, req)
-    local role, uid = req.user.role, player.uid
-    local a, b = self:A(), self:B()
-    local r = nil
+function GameRoom.updateRole(self, player, cur, role, ca, pr, idx)
+    local r, uid = nil, player.uid
 
-    if a then
-        if a.role == "CandidateA" and role == "PresenterA" and uid == a.uid then
-            r = "OK"
-            a.role = role
+    if cur then
+        if cur.role == ca and role == pr and uid == cur.uid then
+            r = "OK"; cur.role = role
         end
-        print(a.role == "CandidateA", role == "Attendee", uid == a.uid)
-        if a.role == "CandidateA" and role == "Attendee" and uid == a.uid then
-            r = "OK"
-            a.role = role
-            table.remove(self.presenters, 1)
+        if cur.role == ca and role == "Attendee" and uid == cur.uid then
+            r = "OK"; cur.role = role
+            self.presenters[idx] = nil
         end
-        if a.role == role and role == "CandidateA" then
+        if cur.role == pr and role == "Attendee" and uid == cur.uid 
+                                                and self.status == "Ready" then
+            r = "OK"; cur.role = role
+            self.presenters[idx] = nil
+        end
+        if cur.role == role and role == ca then
             r = "OCCUPY"
         end
     else
-        if role == "CandidateA" then
+        if role == ca then
             r = "OK"
             player.role = role
-            self.presenters[1] = player
+            self.presenters[idx] = player
         end
     end
 
     if r then 
         player:SendMsg("S2CPreludeRep", {ret = r})
         print("reply prelude", uid, role, r)
-        return r
     end
-
-    if b then
-        if b.role == "CandidateB" and role == "PresenterB" and uid == b.uid then
-            r = "OK"
-            b.role = role
-        end
-        if b.role == "CandidateB" and role == "Attendee" and uid == b.uid then
-            r = "OK"
-            b.role = role
-            table.remove(self.presenters, #self.presenters)
-        end
-        if b.role == role and role == "CandidateB" then
-            r = "OCCUPY"
-        end
-    else
-        if role == "CandidateB" then
-            r = "OK"
-            player.role = role
-            self.presenters[2] = player
-        end
-    end
-
-    if not r then
-        r = "FL"
-        print("update role FL")
-    end 
-    player:SendMsg("S2CPreludeRep", {ret = r})
-    print("reply prelude", uid, role, r)
     return r
 end
 
