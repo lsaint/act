@@ -89,7 +89,7 @@ function GiftMgr:increasePower(uid, touid, gid, gcount)
 end
 
 function GiftMgr:increaseGiftScore(touid, gid, gcount)
-    local s = self.gift_score[touid]
+    local s = self.gift_score[gid]
     if not s then return end
     self.gift_score[touid] = s + GiftScore[gid] * gcount
 end
