@@ -94,14 +94,15 @@ func (this *GateServer) parse() {
                         fmt.Println("pb Unmarshal err", err)
                         break
                     }
-                    gheader = this.Login(conn, pb_msg)
+                    if gheader = this.Login(conn, pb_msg); gheader == nil {
+                        continue
+                    }
                 } else if uri == 0 {
                     this.Logout(conn)
                     continue
                 } else {
                     gheader = this.conn2gheader[conn]
                 }
-                //fmt.Println("gate entry", uri)
                 this.GateEntry <-&proto.GateInPack{Header: gheader, 
                                             Uri: pb.Uint32(uint32(uri)), Bin: msg[LEN_URI:]}
 
@@ -149,6 +150,7 @@ func (this *GateServer) Login(conn *ClientConnection, m pb.Message) *proto.GateI
     uid := req.GetUid()
     sid := req.GetChannel()
     // register 
+    if _, exist := this.uid2conn[uid]; exist { return nil }
     this.uid2conn[uid] = conn
     fmt.Println("[CCU]", len(this.uid2conn))
     if conns, exist := this.sid2conns[sid]; exist {
