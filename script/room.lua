@@ -250,7 +250,7 @@ function GameRoom.OnPunishOver(self, player, req)
     table.insert(self.over, player)    
     local rep = {ret = "WAIT_OTHER"}
     if #self.over == 2 then
-        self:OnStopGame()
+        self:stopGame()
         rep.ret = "OK"
     else 
         print("waiting other over")
@@ -262,20 +262,38 @@ end
 
 function GameRoom.OnStopGame(self, player, req)
     print("OnStopGame")
-    if player then  
-        if self.status ~= "Ready" and self:A().uid ~= player.uid and self:B().uid ~= player.uid then
-            print("not presenter stop game")
-            return
-        end
-        self:Broadcast("S2CNotifyChat", { msg = "", user = { name = player.name },
-                                        type = STOP_PRESENTER_LEFT })
+    local t = nil
+    if req.presenter.uid == 0 and player.privilege >= 200 then
+        print("STOP_ADMIN")
+        t = STOP_ADMIN
+    elseif player.uid == req.presenter.uid and player == self:A() or player == self:B() then
+        print("STOP_LEFT")
+        t = STOP_LEFT
+    else
+        return
     end
-    self:notifyStatus("Ready")
+    self:stopGame(t, player.name)
+end
 
-    if self:A() then self:A().role = "CandidateA" end
-    if self:B() then self:B().role = "CandidateB" end
-    self:Broadcast("S2CNotifyPrelude", self:getPrelude())
+function GameRoom.stopGame(self, t, n)
+    print("stopGame", t, n)
+    self:notifyStatus("Ready")
     self:init()
+    if t ~= nil then
+        if self:A() then 
+            self:A().role = "Attendee" 
+            self.presenters[1] = nil
+        end
+        if self:B() then 
+            self:B().role = "Attendee" 
+            self.presenters[2] = nil
+        end
+    else 
+        if self:A() then self:A().role = "CandidateA" end
+        if self:B() then self:B().role = "CandidateB" end
+    end
+    self:Broadcast("S2CNotifyPrelude", self:getPrelude())
+    self:Broadcast("S2CNotifyChat", { msg = "", user = { name = n }, type = t })
 end
 
 function GameRoom.OnRegGift(self, player, req)
@@ -377,19 +395,23 @@ function GameRoom.notifyTopn(self)
     self:Broadcast("S2CNotifyTopnGiver", {topn = self.giftmgr:topn()})
 end
 
+function GameRoom.clearPresenter(self, player)
+    if self:A() and player.uid == self:A().uid then
+        self.presenters[1] = nil
+    end
+    if self:B() and player.uid == self:B().uid then
+        self.presenters[2] = nil
+    end
+end
+
 function GameRoom.OnLogout(self, player, req)
     if not player then return end
     print("OnLogout", player.uid, player.role)
     if player:isAorB() then 
         if self.status ~= "Ready" then
-            self:OnStopGame(player)
+            self:stopGame(STOP_LOGOUT, player.name)
         end
-        if self:A() and player.uid == self:A().uid then
-            self.presenters[1] = nil
-        end
-        if self:B() and player.uid == self:B().uid then
-            self.presenters[2] = nil
-        end
+        self:clearPresenter(player)
         self:Broadcast("S2CNotifyPrelude", self:getPrelude())
     end
     self.uid2player[player.uid] = nil
