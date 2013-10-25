@@ -22,7 +22,7 @@ function Player:init()
     self.imid           =          self.user.imid 
     self.sex            =          self.user.sex 
     self.privilege      =          self.user.privilege 
-    self.role           =          self.user.role       
+    self.role           =          "Attendee"
 end
 
 function Player:isAorB()
