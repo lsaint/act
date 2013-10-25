@@ -387,10 +387,10 @@ function GameRoom.OnLogout(self, player, req)
             self:OnStopGame(player)
         end
         if self:A() and player.uid == self:A().uid then
-            table.remove(self.presenters, 1)
+            self.presenters[1] = nil
         end
         if self:B() and player.uid == self:B().uid then
-            table.remove(self.presenters, #self.presenters)
+            self.presenters[2] = nil
         end
         self:Broadcast("S2CNotifyPrelude", self:getPrelude())
     end
