@@ -29,9 +29,9 @@ local function WatchDog()
                 room:OnInvildProto(uid, pname)
                 return
             end
-        elseif pname == "Login" then
-            print("relogin", uid)
-            return
+        --elseif pname == "Login" then
+        --    print("relogin", uid)
+        --    return
         end
         local method = string.format("On%s", pname)
         --print(string.format("%s%s%s", "---------", pname, "---------"))
