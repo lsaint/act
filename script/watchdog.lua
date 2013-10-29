@@ -35,6 +35,7 @@ local function WatchDog()
         end
         local method = string.format("On%s", pname)
         --print(string.format("%s%s%s", "---------", pname, "---------"))
+        player.lastping = os.time()
         room[method](room, player, req)
     end
 

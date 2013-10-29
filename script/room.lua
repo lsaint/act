@@ -299,7 +299,6 @@ function GameRoom.stopGame(self, t, n)
 end
 
 function GameRoom.OnRegGift(self, player, req)
-    print("OnRegGift")
     local rep = {token = ""}
     rep.token, rep.sn, rep.orderid = self.giftmgr:regGiftOrder(player.uid, req)
     player:SendMsg("S2CRegGiftRep", rep)
@@ -388,7 +387,6 @@ function GameRoom.getLoser(self)
 end
 
 function GameRoom.notifyVips(self)
-    print("notifyVips")
     local a, b = self.giftmgr:vips()
     self:Broadcast("S2CNotifyVips", {a_vip = a,  b_vip = b})
 end
@@ -420,8 +418,6 @@ function GameRoom.OnLogout(self, player, req)
 end
 
 function GameRoom.OnPing(self, player, req)
-    --player:SendMsg("S2CPingRep", {})
-    player.lastping = os.time()
 end
 
 function GameRoom.checkPing(self)
@@ -436,7 +432,6 @@ function GameRoom.checkPing(self)
 end
 
 function GameRoom.OnInvildProto(self, uid, pname)
-    print("not login yet", uid, pname)
     self:SendMsg("S2CReLogin", {}, {uid})
 end
 
