@@ -12,8 +12,9 @@ enum GameRole {
 enum Result {
     OK = 0;
     FL = 1;
-    WAIT_OTHER  = 101;
-    OCCUPY      = 102;
+    UNMATCH_VERSION = 10;
+    WAIT_OTHER      = 101;
+    OCCUPY          = 102;
 }
 
 enum GameStatus {
@@ -65,13 +66,14 @@ message C2SLogin {
     required string token = 2;
     required uint32 channel = 3;
     required UserData user = 4;
+    required string version = 5;
 }
 
 // 1001
 message S2CLoginRep {
     required Result ret = 1;
-    required GameStatus status = 2;
-    required UserData user = 3;
+    optional GameStatus status = 2;
+    optional UserData user = 3;
 }
 
 // 2
