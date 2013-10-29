@@ -41,8 +41,10 @@ type LuaState struct {
 }
 
 func NewLuaState(out chan *proto.GateOutPack) *LuaState {
-    ls := &LuaState{lua.NewState(), make(chan *StateInPack, 10), out, postman.NewPostman(),
-                        make(chan *proto.GiftCbPack, 64)}
+    ls := &LuaState{lua.NewState(), 
+                    make(chan *StateInPack, 1024), 
+                    out, postman.NewPostman(),
+                    make(chan *proto.GiftCbPack, 1024)}
     ls.state.OpenLibs()
     if err := ls.state.DoFile("./script/glue.lua"); err != nil {
         ls.doPrintingErrors(err)

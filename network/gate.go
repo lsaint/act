@@ -26,7 +26,7 @@ type GateServer struct {
 }
 
 func NewGateServer(sendrecver GateSendRecver) *GateServer {
-    gs := &GateServer{buffChan: make(chan *ConnBuff),
+    gs := &GateServer{buffChan: make(chan *ConnBuff, 128),
                         conn2gheader: make(map[*ClientConnection]*proto.GateInHeader),
                         uid2conn: make(map[uint32]*ClientConnection),
                         sid2conns: make(map[uint32][]*ClientConnection),
