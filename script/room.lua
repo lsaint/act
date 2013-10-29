@@ -53,8 +53,15 @@ function GameRoom.B(self)
 end
 
 function GameRoom.OnLogin(self, player, req)
+    local rep = { ret = "UNMATCH_VERSION" }
+    local v = req.version:split(".")
+    if #v < 2 or tonumber(v[1]) ~= V1 or tonumber(v[2]) ~= V2 then
+        player:SendMsg("S2CLoginRep", rep)
+        return
+    end
+
     self.uid2player[req.uid] = player
-    local rep = {
+    rep = {
         ret = "OK",
         status = self.status,
         user = { },
