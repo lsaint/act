@@ -92,3 +92,6 @@ function parseUrlArg(ss)
     return ret
 end
 
+function tprint(...)
+    print(os.date("%Y/%m/%d %X"), ...)
+end

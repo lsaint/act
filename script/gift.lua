@@ -160,7 +160,6 @@ end
 
 -- cls methond
 function GiftMgr.finishGift(uid, orderid)
-    print("finishGift", uid, orderid)
     local t = os.date("%Y%m%d%H%M%S")
     local to_md5_args = { APPID, uid, orderid, SRVID, t, AUTH_KEY }
     local to_md5 = string.format("%s%s%s%s%s%s", unpack(to_md5_args))
@@ -169,7 +168,7 @@ function GiftMgr.finishGift(uid, orderid)
        "appid=%s&uid=%s&orderid=%s&srvid=%s&time=%s&verify=%s", 
         unpack(to_md5_args))
     local ss = GoPost(FINISH_GIFT_URL, post_string)
-    print("finish order ret", ss)
+    tprint("finishGift", uid, orderid, ss)
     local ret = parseUrlArg(ss)
     SaveGift({orderid=orderid, step=STEP_GIFT_FINISH, finish_time=TIME_NOW, 
               op_ret=(ret["op_ret"] or "")})
