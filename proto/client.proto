@@ -241,10 +241,6 @@ message S2CNotifyA2B {
 message C2SPing {
 }
 
-// 1037
-message S2CPingRep {
-}
-
 // 1038
 message S2CReLogin {
 }

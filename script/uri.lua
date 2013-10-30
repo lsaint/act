@@ -7,7 +7,6 @@ URI["proto.S2CGiftRep"] =              1003
 URI["proto.S2CPollRep"] =              1004
 URI["proto.S2CPunishOverRep"] =        1005
 URI["proto.S2CRegGiftRep"] =           1007
-URI["proto.S2CPingRep"] =              1037
 URI["proto.S2CReLogin"] =              1038
 
 URI["proto.S2CNotifyStatus"] =          2001
