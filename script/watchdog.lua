@@ -7,17 +7,17 @@ local function WatchDog()
         sid2room = {}
     }
 
-    function self.gainRoom(sid)
+    function self.gainRoom(tsid, sid)
         local room = self.sid2room[sid]
         if room == nil then
-            room = GameRoom.new(sid)
+            room = GameRoom.new(tsid, sid)
             self.sid2room[sid] = room
         end
         return room
     end
 
-    function self.dispatch(sid, uid, pname, data)
-        local room = self.gainRoom(sid)
+    function self.dispatch(tsid, sid, uid, pname, data)
+        local room = self.gainRoom(tsid, sid)
         local proto_name = string.format("%s%s", "proto.C2S", pname)
         local req = protobuf.decode(proto_name, data)
         local player = room.uid2player[uid]
@@ -39,8 +39,10 @@ local function WatchDog()
         room[method](room, player, req)
     end
 
-    function self.giftCb(op, sid, uid, touid, gid, gcount, orderid)
-        local room = self.gainRoom(tonumber(sid))
+    function self.giftCb(op, tsid, uid, touid, gid, gcount, orderid)
+        local sid = GiftMgr.orderid2req[orderid]
+        if not sid then return end
+        local room = self.gainRoom(tonumber(tsid, sid))
         room:OnGiftCb(tonumber(op), tonumber(uid), tonumber(touid), tonumber(gid), tonumber(gcount), orderid)
     end
 

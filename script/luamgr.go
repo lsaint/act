@@ -26,6 +26,7 @@ const (
 
 
 type StateInPack struct {
+    tsid        float64
     sid         float64
     uid         float64    
     pname       string
@@ -106,11 +107,12 @@ func (this *LuaState) invokeLua(t int, args ...interface{}) {
 
 func (this *LuaState) onProto(pack *StateInPack) error {
     this.state.GetGlobal("dispatch")
+    this.state.PushNumber(pack.tsid)
     this.state.PushNumber(pack.sid)
     this.state.PushNumber(pack.uid)
     this.state.PushString(pack.pname)
     this.state.PushString(pack.data)
-    return this.state.Call(4, 0)
+    return this.state.Call(5, 0)
 }
 
 func (this *LuaState) onUpdate() error {
@@ -121,7 +123,7 @@ func (this *LuaState) onUpdate() error {
 func (this *LuaState) onGiftCb(pack *proto.GiftCbPack) error {
     this.state.GetGlobal("giftCb") 
     this.state.PushString(pack.GetOp())
-    this.state.PushString(pack.GetSid())
+    this.state.PushString(pack.GetTsid())
     this.state.PushString(pack.GetFromUid())
     this.state.PushString(pack.GetToUid())
     this.state.PushString(pack.GetGiftId())
@@ -155,25 +157,25 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     for {
         select {
             case pack := <-this.recvChan:
-                //fmt.Println("luamgr recv")
                 h := pack.GetHeader()
-                uid, sid := h.GetUid(), h.GetSid()
+                uid, sid, tsid := h.GetUid(), h.GetSid(), h.GetTsid()
                 pname := proto.URI2PROTO[uint16(pack.GetUri())].Name()[3:]
-                state := this.GetLuaState(sid)
-                state.stateInChan <- &StateInPack{float64(sid), float64(uid), pname,
-                                        string(pack.GetBin())}
+                state := this.GetLuaState(tsid)
+                state.stateInChan <- &StateInPack{float64(tsid), float64(sid), 
+                                                    float64(uid), pname,
+                                                    string(pack.GetBin())}
 
             case pack := <-httpCb.GiftCbChan:
-                if sid, err := strconv.ParseUint(pack.GetSid(), 10, 64); err == nil {
-                    state := this.GetLuaState(uint32(sid))
+                if tsid, err := strconv.ParseUint(pack.GetTsid(), 10, 64); err == nil {
+                    state := this.GetLuaState(uint32(tsid))
                     state.giftCbChan <- pack
                 }
         }
     }
 }
 
-func (this *LuaMgr)GetLuaState(sid uint32) *LuaState {
-    hash := sid % common.CF.MaxState
+func (this *LuaMgr)GetLuaState(tsid uint32) *LuaState {
+    hash := tsid % common.CF.MaxState
     state, exist := this.hash2state[hash] 
     if !exist {
        state = NewLuaState(this.sendChan)
@@ -188,28 +190,30 @@ func RegisterLuaFunction(LS *LuaState) {
     // arg1: uri        uint32
     // arg2: msg        string
     // arg3: sid        uint32
-    // arg4: uids       []uint32
+    // arg4: tsid       uint32
+    // arg5: uids       []uint32
     // return: nil
     Lua_SendMsg := func(L *lua.State) int {
         uri := uint16(L.ToInteger(1))
         msg := L.ToString(2)
-        sid := uint32(L.ToInteger(3))
-        len_uids := int(L.ObjLen(4))
+        tsid := uint32(L.ToInteger(3))
+        sid := uint32(L.ToInteger(4))
+        len_uids := int(L.ObjLen(5))
         var uids []uint32
         for i:=1; i<=len_uids; i++ {
-            L.RawGeti(4, i)
+            L.RawGeti(5, i)
             uid := L.ToInteger(-1)
             uids = append(uids, uint32(uid))
             //L.Pop(1)
         }
-        //fmt.Println(len(msg), uids, sid, uri)
 
         uri_field := make([]byte, 2)
         binary.LittleEndian.PutUint16(uri_field, uri)
         data := []byte(msg)
         data = append(uri_field, data...)
 
-        LS.stateOutChan <- &proto.GateOutPack{Uids: uids, Sid: pb.Uint32(sid), Bin: data}
+        LS.stateOutChan <- &proto.GateOutPack{Uids: uids, Sid: pb.Uint32(sid), 
+                                              Tsid: pb.Uint32(tsid), Bin: data}
         return 0
     }
 

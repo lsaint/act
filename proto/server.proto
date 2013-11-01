@@ -2,7 +2,8 @@ package proto;
 
 message GateInHeader {
     required uint32 uid = 1;
-    required uint32 sid = 2;
+    required uint32 tsid = 2;
+    required uint32 sid = 3;
 }
 
 message GateInPack {
@@ -13,12 +14,13 @@ message GateInPack {
 
 message GateOutPack {
     repeated uint32 uids = 1;
-    optional uint32 sid = 2;
-    required bytes bin = 3;
+    optional uint32 tsid = 2;
+    optional uint32 sid = 3;
+    required bytes bin = 4;
 }
 
 message GiftCbPack {
-    required  string Sid         = 1;
+    required  string Tsid         = 1;
     required  string FromUid     = 2;
     required  string ToUid       = 3;
     required  string GiftId      = 4;

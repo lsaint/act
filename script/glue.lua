@@ -18,16 +18,15 @@ require "db"
 
 parser.register("client.proto", "./proto/")
 
-function dispatch(sid, uid, pname, data)
-    watchdog.dispatch(sid, uid, pname, data)
+function dispatch(tsid, sid, uid, pname, data)
+    watchdog.dispatch(tsid, sid, uid, pname, data)
 end
 
-function SendMsg(pname, msg, uids, sid)
+function SendMsg(pname, msg, uids, tsid, sid)
     local p = string.format("%s%s", "proto.", pname)
     local _msg = protobuf.encode(p, msg)
     local uri = URI[p]
-    --print("LuaSendMsg", pname, uids[1], sid)
-    GoSendMsg(uri, _msg, sid, uids)
+    GoSendMsg(uri, _msg, tsid, sid, uids)
 end
 
 function update()

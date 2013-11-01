@@ -148,9 +148,13 @@ func (this *GateServer) Login(conn *ClientConnection, m pb.Message) *proto.GateI
     // check token
     req := m.(*proto.C2SLogin)
     uid := req.GetUid()
-    sid := req.GetChannel()
+    sid := req.GetSid()
+    tsid := req.GetTsid()
     // register 
-    if _, exist := this.uid2conn[uid]; exist { return nil }
+    if c, exist := this.uid2conn[uid]; exist { 
+        fmt.Println("uid conn exist", uid)
+        this.Logout(c)
+    }
     this.uid2conn[uid] = conn
     fmt.Println("[CCU]", len(this.uid2conn))
     if conns, exist := this.sid2conns[sid]; exist {
@@ -160,7 +164,7 @@ func (this *GateServer) Login(conn *ClientConnection, m pb.Message) *proto.GateI
         conns = append(conns, conn)
         this.sid2conns[sid] = conns
     }
-    gheader := &proto.GateInHeader{Uid: pb.Uint32(uid), Sid: pb.Uint32(sid)}
+    gheader := &proto.GateInHeader{Uid: pb.Uint32(uid), Tsid: pb.Uint32(tsid), Sid: pb.Uint32(sid)}
     this.conn2gheader[conn] = gheader
     return gheader
 }

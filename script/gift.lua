@@ -20,9 +20,10 @@ local GiftScore = {
 GiftMgr = {}
 GiftMgr.orderid2req = {}
 
-function GiftMgr:new(sid, presenters)
+function GiftMgr:new(tsid, sid, presenters)
     self.__index = self
     local ins = setmetatable({}, self)
+    ins.tsid = tsid
     ins.sid = sid
     ins.presenters = presenters
     ins.powers = {} -- {uid=power}
@@ -40,7 +41,7 @@ function GiftMgr:regGiftOrder(from_uid, req)
     if req.to_uid == 0 then return "", 0, "" end
     local t, sn = os.date("%Y%m%d%H%M%S"), GoGetSn()
     local to_md5_args = { APPID, from_uid, req.to_uid, req.gift.id,
-                          req.gift.count, sn, self.sid, SRVID, 
+                          req.gift.count, sn, self.tsid, SRVID, 
                           t, AUTH_KEY }
     local to_md5 = string.format("%s%s%s%s%s%s%s%s%s%s", unpack(to_md5_args))
     to_md5_args[10] = GoMd5(to_md5)
@@ -50,9 +51,10 @@ function GiftMgr:regGiftOrder(from_uid, req)
     local ss = GoPost(GIFT_URL, post_string)
     local op, orderid, token = self:checkPostRet(ss)
     if orderid ~= "" then
+        req["sid"] = self.sid -- for gift's callback 
         self.orderid2req[orderid] = req
         SaveGift({uid=from_uid, to_uid=req.to_uid, gid=req.gift.id, gcount=req.gift.count,
-                  sid=self.sid, step=STEP_GIFT_REG, orderid=orderid, sn=sn, op_ret=op, 
+                  sid=self.tsid, step=STEP_GIFT_REG, orderid=orderid, sn=sn, op_ret=op, 
                   create_time=TIME_NOW, finish_time=TIME_INGORE})
     end
     return token, sn, orderid

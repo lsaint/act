@@ -7,8 +7,9 @@ require "db"
 GameRoom = {}
 GameRoom.__index = GameRoom
 
-function GameRoom.new(sid)
+function GameRoom.new(tsid, sid)
     local self = setmetatable({}, GameRoom)
+    self.tsid = tsid
     self.sid = sid
     self.uid2player = {}
     self.status = "Ready"
@@ -25,17 +26,17 @@ function GameRoom.init(self)
     self.timer = Timer:new(self.sid)
     --self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
     self.guess = nil
-    self.giftmgr = GiftMgr:new(self.sid, self.presenters)
+    self.giftmgr = GiftMgr:new(self.tsid, self.sid, self.presenters)
 end
 
 --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
 function GameRoom.SendMsg(self, pname, msg, uids)
-    SendMsg(pname, msg, uids, self.sid)
+    SendMsg(pname, msg, uids, self.tsid, self.sid)
 end
 
 --self:Broadcast("S2CLoginRep", rep) -- all
 function GameRoom.Broadcast(self, pname, msg)
-    SendMsg(pname, msg, {}, self.sid)
+    SendMsg(pname, msg, {}, self.tsid, self.sid)
 end
 
 function GameRoom.notifyStatus(self, st)
@@ -104,7 +105,7 @@ function GameRoom.OnPrelude(self, player, req)
 
     if a and b then    
         if a.role == "PresenterA" and b.role == "PresenterB" then
-            print("start sucess", self.sid)
+            tprint("START", self.tsid, self.sid)
             self:notifyStatus("Round")
             self.timer:settimer(5, 1, self.roundStart, self)
             self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
