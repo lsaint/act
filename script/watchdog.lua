@@ -40,9 +40,12 @@ local function WatchDog()
     end
 
     function self.giftCb(op, tsid, uid, touid, gid, gcount, orderid)
-        local sid = GiftMgr.orderid2req[orderid]
-        if not sid then return end
-        local room = self.gainRoom(tonumber(tsid, sid))
+        local req = GiftMgr.orderid2req[orderid]
+        if not req or not req["sid"] then 
+            tprint("giftcb error", orderid)
+            return 
+        end
+        local room = self.gainRoom(tonumber(tsid), req["sid"])
         room:OnGiftCb(tonumber(op), tonumber(uid), tonumber(touid), tonumber(gid), tonumber(gcount), orderid)
     end
 
