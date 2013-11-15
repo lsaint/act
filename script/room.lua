@@ -1,6 +1,6 @@
 
 require "utility"
-require "guess"
+require "round"
 require "gift"
 require "db"
 
@@ -12,8 +12,9 @@ function GameRoom.new(tsid, sid)
     self.tsid = tsid
     self.sid = sid
     self.uid2player = {}
-    self.status = "Ready"
     self.presenters = {}
+    self.status = "Ready"
+    self.mode = "MODE_ACT"
     self:init()
     return self
 end
@@ -27,6 +28,7 @@ function GameRoom.init(self)
     --self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.tsid, self.sid, self.presenters)
+    self.roundmgr = RoundMgr:new(self)
 end
 
 --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
@@ -37,6 +39,10 @@ end
 --self:Broadcast("S2CLoginRep", rep) -- all
 function GameRoom.Broadcast(self, pname, msg)
     SendMsg(pname, msg, {}, self.tsid, self.sid)
+end
+
+function GameRoom.settimer(self, interval, count, func, ...)
+    self.timer:settimer(interval, count, func, ...)
 end
 
 function GameRoom.notifyStatus(self, st)
@@ -53,7 +59,7 @@ function GameRoom.B(self)
 end
 
 function GameRoom.OnLogin(self, player, req)
-    local rep = { ret = "UNMATCH_VERSION" }
+    local rep = { ret = "UNMATCH_VERSION"}
     local v = req.version:split(".")
     if #v < 2 or tonumber(v[1]) ~= V1 or tonumber(v[2]) ~= V2 then
         player:SendMsg("S2CLoginRep", rep)
@@ -63,6 +69,7 @@ function GameRoom.OnLogin(self, player, req)
     self.uid2player[req.uid] = player
     rep = {
         ret = "OK",
+        mode = self.mode,
         status = self.status,
         user = { },
     }
@@ -80,19 +87,31 @@ function GameRoom.OnLogin(self, player, req)
         player:SendMsg("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
         player:SendMsg("S2CNotifyScores", {scores = self.scores})
     elseif self.status == "Round" and #self.round_info ~= 0 then
-        t = ROUND_TIME - (os.time() - self.round_info[4])
+        local t = ROUND_TIME - (os.time() - self.round_info[4])
         if t < 0 then return end
         player:SendMsg("S2CNotifyRoundStart", {
                 presenter = {uid = self.round_info[1].uid},
                 round = self.round_info[2],
-                mot = {desc = self.round_info[3].desc},
+                mot = self.round_info[3],
                 time = t,
             })
     end
 end
 
+function GameRoom.OnChangeMode(self, player, req)
+    print("changemode", dump(req))
+    local rep = {ret = "FL"}
+    if player.role ~= "Attendee" and req.mode ~= self.mode and self.status == "Ready" then
+        self.mode = req.mode
+        rep.ret = "OK"
+        self:Broadcast("S2CNotifyChangeMode", 
+                       {mode = self.mode, user = {uid = player.uid, name = player.name}})
+       self:init()
+    end
+    player:SendMsg("S2CChangeModeRep", rep)
+end
+
 function GameRoom.OnPrelude(self, player, req)
-    print("prelude", player.uid, req.user.role)
     local a, b = self:A(), self:B()
     local r1 = self:updateRole(player, a, req.user.role, "CandidateA", "PresenterA", 1, b)
     local r2 = self:updateRole(player, b, req.user.role, "CandidateB", "PresenterB", 2, a)
@@ -107,7 +126,7 @@ function GameRoom.OnPrelude(self, player, req)
         if a.role == "PresenterA" and b.role == "PresenterB" then
             tprint("START", self.tsid, self.sid)
             self:notifyStatus("Round")
-            self.timer:settimer(5, 1, self.roundStart, self)
+            self.timer:settimer(5, 1, self.roundmgr.roundStart, self.roundmgr)
             self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
             self.giftmgr.presenters = self.presenters
         end
@@ -143,7 +162,6 @@ function GameRoom.updateRole(self, player, cur, role, ca, pr, idx, oth)
 
     if r then 
         player:SendMsg("S2CPreludeRep", {ret = r})
-        print("reply prelude", uid, role, r)
     end
     return r
 end
@@ -161,48 +179,6 @@ function GameRoom.getPrelude(self)
         rep = {b = {uid = b.uid, role = b.role}}
     end
     return rep
-end
-
-function GameRoom.roundStart(self)
-    print("RoundStart")
-    local motions = RandomMotion()
-    if motions == nil then return end
-    self:doRound(self:A(), 1, motions[1])
-    for ar = 2, ROUND_COUNT do
-        self.timer:settimer(ROUND_TIME * (ar-1), 1, self.doRound, self, self:A(), ar, motions[ar])
-    end
-
-    self.timer:settimer(ROUND_COUNT * ROUND_TIME, 1, self.notifyA2B, self)
-    local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
-    for br = 1, ROUND_COUNT do
-        local t = a_total_time + ROUND_TIME * (br - 1)
-        self.timer:settimer(t, 1, self.doRound, self, self:B(), br, motions[br+ROUND_COUNT])
-    end
-
-    local round_end_time = a_total_time + ROUND_TIME * ROUND_COUNT + 1
-    self.timer:settimer(round_end_time, 1, self.pollStart, self)
-
-    local notify_score_count = round_end_time / BC_SCORE_INTERVAL + 1
-    self.timer:settimer(BC_SCORE_INTERVAL, notify_score_count, self.notifyScore, self)
-end
-
-function GameRoom.doRound(self, presenter, r, m)
-    print("DoRound", r)
-    self.round_info = {presenter, r, m, os.time()}
-    self.guess = Guess:new(m)
-    local bc = {
-        presenter = {uid = presenter.uid},
-        round = r,
-        mot = m,
-        time = ROUND_TIME,
-    }   
-    self:Broadcast("S2CNotifyRoundStart", bc)
-end
-
-function GameRoom.notifyA2B(self)
-    print("notifyA2B")
-    self:Broadcast("S2CNotifyA2B", {defer = A2B_ROUND_INTERVAL,
-            b = {uid = self.presenters[2].uid}})
 end
 
 function GameRoom.notifyScore(self)

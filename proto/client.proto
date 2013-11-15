@@ -24,6 +24,11 @@ enum GameStatus {
     Punish = 3;
 }
 
+enum GameMode {
+    MODE_ACT = 0;
+    MODE_FREE = 1;
+}
+
 // em
 message UserData {
     optional uint32 uid = 1;    
@@ -73,8 +78,9 @@ message C2SLogin {
 // 1001
 message S2CLoginRep {
     required Result ret = 1;
-    optional GameStatus status = 2;
-    optional UserData user = 3;
+    required GameMode mode = 2;
+    optional GameStatus status = 3;
+    optional UserData user = 4;
 }
 
 // 2
@@ -92,25 +98,6 @@ message S2CNotifyPrelude {
     optional UserData a = 1;
     optional UserData b = 2;
 }
-
-//// 2 其中1位主播点击准备就绪 
-//message C2SStartGame {
-//    required UserData presenter = 1;
-//}
-//
-//// 8 二麦变动
-//message C2SUnReady {
-//}
-//
-//// 1002  
-//message S2CStartGameRep {
-//     required Result ret = 1;
-//}
-//
-//// 2006 广播其中1位主持人点击了开始
-//message S2CNotifyReady {
-//    required UserData presenter = 1;
-//}
 
 // 2001  游戏状态变更通知
 message S2CNotifyStatus {
@@ -134,7 +121,7 @@ message S2CNotifyChat {
 message S2CNotifyRoundStart {
     required UserData presenter = 1;    
     required uint32 round = 2;
-    required Motion mot = 3;
+    optional Motion mot = 3;
     required uint32 time = 4;
 }
 
@@ -236,6 +223,22 @@ message S2CNotifyVips {
 message S2CNotifyA2B {
     required uint32 defer = 1;
     required UserData b = 2;
+}
+
+// 8
+message C2SChangeMode {
+    required GameMode mode = 1;
+}
+
+// 1008
+message S2CChangeModeRep {
+    required Result ret = 1;
+}
+
+// 2015
+message S2CNotifyChangeMode {
+    required GameMode mode = 1;
+    optional UserData user = 2;
 }
 
 // 37

@@ -23,5 +23,5 @@ function Guess:guess(player, answer)
 end
 
 function Guess:check(answer)
-    return string.find(answer, self.correct_answer.desc) ~= nil
+    return self.correct_answer == nil or string.find(answer, self.correct_answer.desc) ~= nil
 end

@@ -7,6 +7,7 @@ URI["proto.S2CGiftRep"] =              1003
 URI["proto.S2CPollRep"] =              1004
 URI["proto.S2CPunishOverRep"] =        1005
 URI["proto.S2CRegGiftRep"] =           1007
+URI["proto.S2CChangeModeRep"] =        1008
 URI["proto.S2CReLogin"] =              1038
 
 URI["proto.S2CNotifyStatus"] =          2001
@@ -23,3 +24,4 @@ URI["proto.S2CNotifyVips"] =            2011
 URI["proto.S2CNotifyChat"] =            2012
 URI["proto.S2CNotifyPowerPoll"] =       2013
 URI["proto.S2CNotifyA2B"] =             2014
+URI["proto.S2CNotifyChangeMode"] =      2015

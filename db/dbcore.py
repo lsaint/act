@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import random, json, time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pymongo import MongoClient
 
@@ -60,4 +60,15 @@ def saveRoundUidInfo(**kwargs):
     db.rank_uid.insert(kwargs)
     return {}, None
 
+
+def getBillboard(**kwargs):
+    count, sid = kwargs["count"], kwargs["sid"]
+    today = datetime.today()
+    monday = today - timedelta(days=(datetime.isoweekday(today)-1),
+                        hours=today.hour, minutes=today.minute, seconds=today.second)
+    ret = db.gift.aggregate([{"$match": {"sid": sid, "step": 3, "create_time": {"$gt": monday}}},
+                           {"$group": {"_id": "$uid", "total": {"$sum": "$gcount"}}},
+                           {"$sort": {"total": -1}},
+                           {"$limit": count}])
+    return {}, None
 
