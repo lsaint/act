@@ -22,16 +22,16 @@ function RoundMgr:startRoundAct()
     print("startRoundAct")
     local motions = RandomMotion()
     if motions == nil then return end
-    self:doRound(self.room:A(), 1, motions[1])
+    self:doRoundAct(self.room:A(), 1, motions[1])
     for ar = 2, ROUND_COUNT do
-        self.room:settimer(ROUND_TIME * (ar-1), 1, self.doRound, self, self.room:A(), ar, motions[ar])
+        self.room:settimer(ROUND_TIME * (ar-1), 1, self.doRoundAct, self, self.room:A(), ar, motions[ar])
     end
 
     self.room:settimer(ROUND_COUNT * ROUND_TIME, 1, self.notifyA2B, self)
     local a_total_time = ROUND_COUNT * ROUND_TIME + A2B_ROUND_INTERVAL
     for br = 1, ROUND_COUNT do
         local t = a_total_time + ROUND_TIME * (br - 1)
-        self.room:settimer(t, 1, self.doRound, self, self.room:B(), br, motions[br+ROUND_COUNT])
+        self.room:settimer(t, 1, self.doRoundAct, self, self.room:B(), br, motions[br+ROUND_COUNT])
     end
 
     local round_end_time = a_total_time + ROUND_TIME * ROUND_COUNT + 1
@@ -41,15 +41,23 @@ end
 
 function RoundMgr:startRoundFree()
     print("startRoundFree")
-    self:doRound(self.room:A(), 1)
-    self.room:settimer(ROUND_TIME, 1, self.notifyA2B, self)
-    self.room:settimer(ROUND_TIME + A2B_ROUND_INTERVAL, 1, self.doRound, self, self.room:B(), 2)
-    local round_end_time = ROUND_TIME * 2 + A2B_ROUND_INTERVAL
+    self:doRoundFree(self.room:A(), 1)
+    self.room:settimer(ROUND_TIME_FREE, 1, self.notifyA2B, self)
+    self.room:settimer(ROUND_TIME_FREE + A2B_ROUND_INTERVAL, 1, self.doRoundFree, self, self.room:B(), 2)
+    local round_end_time = ROUND_TIME_FREE * 2 + A2B_ROUND_INTERVAL
     self.room:settimer(round_end_time, 1, self.room.pollStart, self.room)
     return round_end_time
 end
 
-function RoundMgr:doRound(presenter, r, m)
+function RoundMgr:doRoundAct(presenter, r, m)
+    self:doRound(presenter, r, m, ROUND_TIME)
+end
+
+function RoundMgr:doRoundFree(presenter, r)
+    self:doRound(presenter, r, nil, ROUND_TIME_FREE)
+end
+
+function RoundMgr:doRound(presenter, r, m, t)
     print("DoRound", r)
     self.room.round_info = {presenter, r, m, os.time()}
     self.room.guess = Guess:new(m)
@@ -57,7 +65,7 @@ function RoundMgr:doRound(presenter, r, m)
         presenter = {uid = presenter.uid},
         round = r,
         mot = m,
-        time = ROUND_TIME,
+        time = t,
     }   
     self.room:Broadcast("S2CNotifyRoundStart", bc)
 end
