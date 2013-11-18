@@ -367,6 +367,7 @@ function GameRoom.notifyTopn(self)
 end
 
 function GameRoom.setPresenter2Attendee(self, player)
+    if not player then return end
     if self:A() and player.uid == self:A().uid then
         player.role = "Attendee"
         self.presenters[1] = nil
