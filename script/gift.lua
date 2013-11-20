@@ -8,7 +8,7 @@ local GiftPower = {
     [1013] = 1,
 }
 
-local GiftScore = {
+local GiftCost = {
     [1009] = 690,
     [1001] = 10,
     [1010] = 1990,
@@ -27,7 +27,6 @@ function GiftMgr:new(tsid, sid, presenters)
     ins.sid = sid
     ins.presenters = presenters
     ins.powers = {} -- {uid=power}
-    ins.uid2giftscore = {}
     ins.uid2givername = {}
     ins.camps = {{}, {}} -- {camp_a_powers, camp_b_powers}
     ins.options = {}
@@ -85,11 +84,6 @@ function GiftMgr:increasePower(uid, touid, gid, gcount)
     if not o then return end
     cur_p = self.camps[o].uid or 1
     self.camps[o][uid] = cur_p + p
-end
-
-function GiftMgr:increaseGiftScore(touid, gid, gcount)
-    local s = self.uid2giftscore[touid] or 0
-    self.uid2giftscore[touid] = s + GiftScore[gid] * gcount
 end
 
 function GiftMgr:getPower(uid)
@@ -158,7 +152,7 @@ function GiftMgr:sign(uid, name)
 end
 
 -- cls methond
-function GiftMgr.finishGift(uid, orderid)
+function GiftMgr.finishGift(uid, orderid, gid, gcount)
     local t = os.date("%Y%m%d%H%M%S")
     local to_md5_args = { APPID, uid, orderid, SRVID, t, AUTH_KEY }
     local to_md5 = string.format("%s%s%s%s%s%s", unpack(to_md5_args))
@@ -169,7 +163,8 @@ function GiftMgr.finishGift(uid, orderid)
     local ss = GoPost(FINISH_GIFT_URL, post_string)
     tprint("finishGift", uid, orderid, ss)
     local ret = parseUrlArg(ss)
+    local money = gcount * GiftCost[gid]
     SaveGift({orderid=orderid, step=STEP_GIFT_FINISH, finish_time=TIME_NOW, 
-              op_ret=(ret["op_ret"] or "")})
+              money=money, op_ret=(ret["op_ret"] or "")})
 end
 

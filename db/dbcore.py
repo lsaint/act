@@ -3,6 +3,7 @@
 import random, json, time
 from datetime import datetime, timedelta
 
+import gevent
 from pymongo import MongoClient
 
 
@@ -15,8 +16,41 @@ db.authenticate(MONGO_USR, MONGO_PSW)
 def T():
     return time.strftime("%Y/%m/%d %H:%M:%S")
 
+g_uid2name = {}
+def cacheName():
+    global g_uid2name
+    ret = db.uname.find()
+    for q in ret:
+        g_uid2name[q["uid"]] = q["name"]
+cacheName()
 
 ### 
+
+def setName(**kwargs):
+    global g_uid2name, g_updateName
+    uid = kwargs["uid"]
+    name = kwargs["name"]
+    g_uid2name[uid] = name
+    g_updateName[uid] = name
+    #db.uname.update({"uid": uid}, {"uid": uid, "name": name, "time": datetime.now()}, upsert=True)
+    return {}, None
+
+
+g_updateName = {}
+def updateSetName():
+    global g_updateName
+    while True:
+        gevent.sleep(3)
+        if len(g_uid2name) == 0:
+            continue
+        uids = []
+        new_items = []
+        for u, n in g_updateName.iteritems():
+            uids.append(u)
+            new_items.append({"uid": u, "name": n, "time": datetime.now()})
+        db.uname.remove({"uid": {"$in" :uids}})
+        db.uname.insert(new_items)
+        g_updateName = {}
 
 
 def randomMotion(**kwargs):
@@ -49,26 +83,21 @@ def saveGift(**kwargs):
     return {}, None
 
 
-def saveRoundSidInfo(**kwargs):
-    kwargs["time"] = T()
-    db.rank_sid.insert(kwargs)
-    return {}, None
-
-
-def saveRoundUidInfo(**kwargs):
-    kwargs["time"] = T()
-    db.rank_uid.insert(kwargs)
-    return {}, None
-
-
 def getBillboard(**kwargs):
     count, sid = kwargs["count"], kwargs["sid"]
     today = datetime.today()
     monday = today - timedelta(days=(datetime.isoweekday(today)-1),
                         hours=today.hour, minutes=today.minute, seconds=today.second)
     ret = db.gift.aggregate([{"$match": {"sid": sid, "step": 3, "create_time": {"$gt": monday}}},
-                           {"$group": {"_id": "$uid", "total": {"$sum": "$gcount"}}},
+                           {"$group": {"_id": "$uid", "total": {"$sum": "$money"}}},
                            {"$sort": {"total": -1}},
                            {"$limit": count}])
-    return {}, None
+    if ret["ok"] != 1:
+        return {}, None
+    r = {}
+    for item in ret["result"]:
+        total, uid = item["total"], item["_id"]
+        name = g_uid2name.get(uid) or str(uid)
+        r[name] = total
+    return r, None
 

@@ -241,6 +241,11 @@ message S2CNotifyChangeMode {
     optional UserData user = 2;
 }
 
+// 2016
+message S2CNotifyBillboard {
+    repeated Ranker topn = 1;    
+}
+
 // 9
 message C2SAdminClear {
 }

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import json, time 
+import json, time, gevent
 from gevent import wsgi
 
 from bson.objectid import ObjectId
@@ -44,5 +44,7 @@ def dispatch(jn):
 if __name__ == "__main__":
     server = wsgi.WSGIServer(('', 8081), handle)
     print("starting act db server on port 8081")
-    server.serve_forever()
+    jobs = [gevent.spawn(server.serve_forever), gevent.spawn(dbcore.updateSetName)]
+    gevent.joinall(jobs)
+
 

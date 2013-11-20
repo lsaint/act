@@ -29,3 +29,22 @@ function SaveGift(dt)
     local ret = json.decode(GoPost(DB_URL, json.encode(req)))
     return ret.error == json.null
 end
+
+
+function GetBillBoard(sid)
+    local req = {params = {{count=BILLBOARD_COUNT, sid=sid}}, method="getBillboard", id = 4}
+    local ret = json.decode(GoPost(DB_URL, json.encode(req)))
+    local billboard = {}
+    if ret.error == json.null then
+        for k, v in pairs(ret.result) do
+            table.insert(billboard, {user={name=k}, s=v})
+        end
+    end
+    return billboard
+end
+
+function SaveName(uid, name)
+    local req = {params = {{uid=uid, name=name}}, method="setName", id = 5}
+    GoPost(DB_URL, json.encode(req))
+end
+

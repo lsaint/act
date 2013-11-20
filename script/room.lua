@@ -29,6 +29,7 @@ function GameRoom.init(self)
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.tsid, self.sid, self.presenters)
     self.roundmgr = RoundMgr:new(self)
+    self.billboard = {topn = GetBillBoard(self.tsid)}
 end
 
 --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
@@ -58,6 +59,10 @@ function GameRoom.B(self)
     return self.presenters[2]
 end
 
+function GameRoom.updateBillboard(self)
+    self.billboard = GetBillBoard(self.tsid)
+end
+
 function GameRoom.OnLogin(self, player, req)
     local rep = { ret = "UNMATCH_VERSION"}
     local v = req.version:split(".")
@@ -77,6 +82,7 @@ function GameRoom.OnLogin(self, player, req)
     player:SendMsg("S2CLoginRep", rep)
 
     player:SendMsg("S2CNotifyPrelude", self:getPrelude())
+    player:SendMsg("S2CNotifyBillboard", self.billboard)
 
     if self.status == "Poll" then
         player:SendMsg("S2CNotfiyPunishOptions", 
@@ -96,6 +102,7 @@ function GameRoom.OnLogin(self, player, req)
                 time = t,
             })
     end
+    SaveName(player.uid, player.name)
 end
 
 function GameRoom.OnChangeMode(self, player, req)
@@ -128,6 +135,7 @@ function GameRoom.OnPrelude(self, player, req)
             self:notifyStatus("Round")
             self.timer:settimer(5, 1, self.roundmgr.roundStart, self.roundmgr)
             self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
+            self.timer:settimer(BC_BILLBOARD_INTERVAL, nil, self.notifyBillboard, self)
             self.giftmgr.presenters = self.presenters
         end
     end
@@ -244,7 +252,7 @@ function GameRoom.OnStopGame(self, player, req)
 end
 
 function GameRoom.OnAdminClear(self, player, req)
-    if player.privilege >= 200 then
+    if player.privilege >= 200 and #self.presenters > 0 then
         self:setPresenter2Attendee(self:A())
         self:setPresenter2Attendee(self:B())
         self:stopGame(STOP_ADMIN, player.name)
@@ -270,7 +278,7 @@ end
 function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     tprint("OnGiftCb", op, from_uid, to_uid, gid, gcount, orderid)
     if op == 1 then 
-        GiftMgr.finishGift(from_uid, orderid)
+        GiftMgr.finishGift(from_uid, orderid, gid, gcount)
     end
 
     local req, giver = GiftMgr.orderid2req[orderid], self.uid2player[from_uid]
@@ -285,7 +293,6 @@ function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
     end
     if self.status ~= "Ready" then
         self.giftmgr:increasePower(from_uid, to_uid, gid, gcount)
-        self.giftmgr:increaseGiftScore(to_uid, gid, gcount)
     end
     GiftMgr.orderid2req[orderid] = nil
 
@@ -356,6 +363,10 @@ end
 
 function GameRoom.notifyTopn(self)
     self:Broadcast("S2CNotifyTopnGiver", {topn = self.giftmgr:topn()})
+end
+
+function GameRoom.notifyBillboard(self)
+    self:Broadcast("S2CNotifyBillboard", self.billboard)
 end
 
 function GameRoom.setPresenter2Attendee(self, player)
