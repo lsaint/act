@@ -32,7 +32,6 @@ def setName(**kwargs):
     name = kwargs["name"]
     g_uid2name[uid] = name
     g_updateName[uid] = name
-    #db.uname.update({"uid": uid}, {"uid": uid, "name": name, "time": datetime.now()}, upsert=True)
     return {}, None
 
 
@@ -48,9 +47,10 @@ def updateSetName():
         for u, n in g_updateName.iteritems():
             uids.append(u)
             new_items.append({"uid": u, "name": n, "time": datetime.now()})
-        db.uname.remove({"uid": {"$in" :uids}})
-        db.uname.insert(new_items)
-        g_updateName = {}
+        if len(uids) > 0:
+            db.uname.remove({"uid": {"$in" :uids}})
+            db.uname.insert(new_items)
+            g_updateName = {}
 
 
 def randomMotion(**kwargs):
