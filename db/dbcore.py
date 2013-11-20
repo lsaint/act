@@ -94,10 +94,10 @@ def getBillboard(**kwargs):
                            {"$limit": count}])
     if ret["ok"] != 1:
         return {}, None
-    r = {}
+    r = []
     for item in ret["result"]:
         total, uid = item["total"], item["_id"]
         name = g_uid2name.get(uid) or str(uid)
-        r[name] = total
+        r.append({name: total})
     return r, None
 

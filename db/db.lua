@@ -36,8 +36,10 @@ function GetBillBoard(sid)
     local ret = json.decode(GoPost(DB_URL, json.encode(req)))
     local billboard = {}
     if ret.error == json.null then
-        for k, v in pairs(ret.result) do
-            table.insert(billboard, {user={name=k}, s=v})
+        for _, item in ipairs(ret.result) do
+            for k, v in pairs(item) do
+                table.insert(billboard, {user={name=k}, s=v})
+            end
         end
     end
     return billboard
