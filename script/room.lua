@@ -60,7 +60,7 @@ function GameRoom.B(self)
 end
 
 function GameRoom.updateBillboard(self)
-    self.billboard = GetBillBoard(self.tsid)
+    self.billboard = {topn = GetBillBoard(self.tsid)}
 end
 
 function GameRoom.OnLogin(self, player, req)
@@ -366,6 +366,7 @@ function GameRoom.notifyTopn(self)
 end
 
 function GameRoom.notifyBillboard(self)
+    self:updateBillboard()
     self:Broadcast("S2CNotifyBillboard", self.billboard)
 end
 
