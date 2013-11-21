@@ -401,6 +401,14 @@ function GameRoom.OnLogout(self, player, req)
     self.uid2player[player.uid] = nil
 end
 
+function GameRoom.OnNetCtrl(self, dt)
+    if dt.op == "restart" then
+        tprint("[CTRL]RESTART")
+        local defer = dt.defer or "60"
+        self:Broadcast("S2CNotifyChat", {msg = defer, type = STOP_RESTART})
+    end
+end
+
 function GameRoom.OnPing(self, player, req)
 end
 

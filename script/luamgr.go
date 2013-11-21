@@ -22,6 +22,7 @@ const (
     PROTO_INVOKE = iota
     UPDATE_INVOKE = iota
     CB_INVOKE = iota
+    NET_CTRL  = iota
 )
 
 
@@ -39,13 +40,15 @@ type LuaState struct {
     stateOutChan        chan *proto.GateOutPack
     pm                  *postman.Postman             
     giftCbChan          chan *proto.GiftCbPack
+    ctrlChan            chan string
 }
 
 func NewLuaState(out chan *proto.GateOutPack) *LuaState {
     ls := &LuaState{lua.NewState(), 
                     make(chan *StateInPack, 1024), 
                     out, postman.NewPostman(),
-                    make(chan *proto.GiftCbPack, 1024)}
+                    make(chan *proto.GiftCbPack, 1024),
+                    make(chan string, 64)}
     ls.state.OpenLibs()
     if err := ls.state.DoFile("./script/glue.lua"); err != nil {
         ls.doPrintingErrors(err)
@@ -79,6 +82,8 @@ func (this *LuaState) loop() {
                 this.invokeLua(UPDATE_INVOKE)
             case pack := <-this.giftCbChan:
                 this.invokeLua(CB_INVOKE, pack)
+            case s := <-this.ctrlChan:
+                this.invokeLua(NET_CTRL, s)
         }
     }
 }
@@ -99,6 +104,9 @@ func (this *LuaState) invokeLua(t int, args ...interface{}) {
         case CB_INVOKE:
             pack, _ := args[0].(*proto.GiftCbPack)
             err = this.onGiftCb(pack)
+        case NET_CTRL:
+            s, _ := args[0].(string)
+            err = this.onNetCtrl(s)
     }
     if err != nil {
         this.doPrintingErrors(err)
@@ -132,6 +140,12 @@ func (this *LuaState) onGiftCb(pack *proto.GiftCbPack) error {
     return this.state.Call(7, 0)
 }
 
+func (this *LuaState) onNetCtrl(s string) error {
+    this.state.GetGlobal("netCtrl")
+    this.state.PushString(s)
+    return this.state.Call(1, 0)
+}
+
 ////
 
 type LuaMgr struct {
@@ -151,6 +165,8 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
     this.sendChan, this.recvChan = out, in
     httpCb := postman.NewHttpCb()
     go httpCb.Start()
+    ctrl := postman.NewNetCtrl()
+    go ctrl.Start()
     for i:=0; i<int(common.CF.MaxState); i++ {
         this.hash2state[uint32(i)] = NewLuaState(this.sendChan)
     }
@@ -169,6 +185,11 @@ func (this *LuaMgr) Start(out chan *proto.GateOutPack, in chan *proto.GateInPack
                 if tsid, err := strconv.ParseUint(pack.GetTsid(), 10, 64); err == nil {
                     state := this.GetLuaState(uint32(tsid))
                     state.giftCbChan <- pack
+                }
+
+            case s := <-ctrl.CtrlChan:
+                for _, state := range this.hash2state {
+                    state.ctrlChan <- s
                 }
         }
     }

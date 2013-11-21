@@ -1,6 +1,7 @@
 
 require "room"
 require "player"
+local json = require("cjson")
 
 local function WatchDog()
     local self = {
@@ -47,6 +48,21 @@ local function WatchDog()
         end
         local room = self.gainRoom(tonumber(tsid), req["sid"])
         room:OnGiftCb(tonumber(op), tonumber(uid), tonumber(touid), tonumber(gid), tonumber(gcount), orderid)
+    end
+
+    function self.netCtrl(s)
+        local ret = json.decode(s)
+        if not ret then 
+            print("[CTRL] json err")
+            return 
+        end
+        if ret.pw ~= CTRL_PW then
+            print("[CTRL] pw err")
+            return
+        end
+        for sid, room in pairs(self.sid2room) do
+            room:OnNetCtrl(ret)
+        end
     end
 
     return self

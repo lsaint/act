@@ -37,3 +37,6 @@ function giftCb(op, sid, uid, touid, giftid, giftcout, orderid)
     watchdog.giftCb(op, sid, uid, touid, giftid, giftcout, orderid)
 end
 
+function netCtrl(s)
+    watchdog.netCtrl(s)
+end
