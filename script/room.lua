@@ -3,6 +3,7 @@ require "utility"
 require "round"
 require "gift"
 require "db"
+local json = require("cjson")
 
 GameRoom = {}
 GameRoom.__index = GameRoom
@@ -25,11 +26,11 @@ function GameRoom.init(self)
     self.scores = {0, 0}
     self.round_info = {} -- {presenter, round_number}
     self.timer = Timer:new(self.sid)
-    --self.timer:settimer(CHECK_PING_INTERVAL, nil, self.checkPing, self)
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.tsid, self.sid, self.presenters)
     self.roundmgr = RoundMgr:new(self)
     self.billboard = {topn = GetBillBoard(self.tsid)}
+    self.timer:settimer(SAMPLER_INTERVAL, nil, self.postSamele, self)
 end
 
 --self:SendMsg("S2CLoginRep", rep, {player.uid}) -- multi
@@ -63,6 +64,18 @@ function GameRoom.updateBillboard(self)
     self.billboard = {topn = GetBillBoard(self.tsid)}
 end
 
+function GameRoom.addPlayer(self, player)
+    local n = self.uid2player.n or 0
+    self.uid2player[player.uid] = player
+    self.uid2player.n = n + 1
+end
+
+function GameRoom.delPlayer(self, player)
+    local n = self.uid2player.n or 0
+    self.uid2player[player.uid] = nil
+    self.uid2player.n = n - 1
+end
+
 function GameRoom.OnLogin(self, player, req)
     local rep = { ret = "UNMATCH_VERSION"}
     local v = req.version:split(".")
@@ -71,7 +84,7 @@ function GameRoom.OnLogin(self, player, req)
         return
     end
 
-    self.uid2player[req.uid] = player
+    self:addPlayer(player)
     rep = {
         ret = "OK",
         mode = self.mode,
@@ -398,7 +411,7 @@ function GameRoom.OnLogout(self, player, req)
             self:Broadcast("S2CNotifyPrelude", self:getPrelude())
         end
     end
-    self.uid2player[player.uid] = nil
+    self:delPlayer(player)
 end
 
 function GameRoom.OnNetCtrl(self, dt)
@@ -407,6 +420,12 @@ function GameRoom.OnNetCtrl(self, dt)
         local defer = dt.defer or "60"
         self:Broadcast("S2CNotifyChat", {msg = defer, type = STOP_RESTART})
     end
+end
+
+function GameRoom.postSamele(self)
+    local topost = {"report", self.tsid, self.sid, self.uid2player.n, self.mode, self.status}
+    local data = string.format("?action=%s&tsid=%s&ssid=%s&ccu=%s&mode=%s&status=%s", unpack(topost))
+    local ret = GoPost(string.format("%s%s", SAMPLER_URL, data), "L")
 end
 
 function GameRoom.OnPing(self, player, req)
