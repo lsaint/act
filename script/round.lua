@@ -20,7 +20,7 @@ end
 
 function RoundMgr:startRoundAct()
     print("startRoundAct")
-    local motions = RandomMotion()
+    local motions = RandomMotion({public=ROUND_COUNT*2-1, private=1, sid=self.room.tsid})
     if motions == nil then return end
     self:doRoundAct(self.room:A(), 1, motions[1])
     for ar = 2, ROUND_COUNT do

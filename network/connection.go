@@ -105,7 +105,7 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
     }
     len_head := binary.LittleEndian.Uint16(buff_head)
     if len_head > MAX_LEN_HEAD {
-        if len_head == 28732 {
+        if len_head == 17735 {
             this.WriteFlashAuthRep()
         } else {
             fmt.Println("message len too long", len_head)

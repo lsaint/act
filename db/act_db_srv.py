@@ -21,7 +21,6 @@ def handle(environ, start_response):
     content_length = int(environ["CONTENT_LENGTH"])
     # fetch the request body
     request = environ["wsgi.input"].read(content_length)
-    print "request:", request
     jn = json.loads(request)
     ret = "{}"
     if type(jn) == dict:

@@ -3,7 +3,6 @@ require "utility"
 require "round"
 require "gift"
 require "db"
-local json = require("cjson")
 
 GameRoom = {}
 GameRoom.__index = GameRoom
@@ -210,7 +209,8 @@ end
 function GameRoom.pollStart(self)
     print("pollStart")
     self:notifyStatus("Poll")
-    local bc = {options = RandomPunish(), loser = self:getLoser().user}
+    local bc = {options = RandomPunish({public=3, private=1, sid=self.tsid}), 
+                loser = self:getLoser().user}
     self.giftmgr.options = bc.options
     self:Broadcast("S2CNotfiyPunishOptions", bc)
     self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
@@ -423,9 +423,9 @@ function GameRoom.OnNetCtrl(self, dt)
 end
 
 function GameRoom.postSamele(self)
-    local topost = {"report", self.tsid, self.sid, self.uid2player.n, self.mode, self.status}
-    local data = string.format("?action=%s&tsid=%s&ssid=%s&ccu=%s&mode=%s&status=%s", unpack(topost))
-    local ret = GoPost(string.format("%s%s", SAMPLER_URL, data), "L")
+    local p = {"report", self.tsid, self.sid, self.uid2player.n, self.mode, self.status, SAMPLER_PWD}
+    local d = string.format("?action=%s&tsid=%s&ssid=%s&ccu=%s&mode=%s&status=%s&pwd=%s", unpack(p))
+    local ret = GoPost(string.format("%s%s", SAMPLER_URL, d), "L")
 end
 
 function GameRoom.OnPing(self, player, req)

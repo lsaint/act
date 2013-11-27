@@ -1,25 +1,22 @@
 
 local json = require("cjson")
 
-local _x = {desc = "出事了"}
 
-function RandomMotion()
-    local req = {params = {{count = 10}}, method = "randomMotion", id = 1}
+function randomGet(kwargs, method)
+    local req = {params = {kwargs}, method = method, id = 12}
     local ret = json.decode(GoPost(DB_URL, json.encode(req)))
-    if ret.error == json.null then
+    if ret and ret.error == json.null then
         return ret.result
     end
     return nil
 end
 
+function RandomMotion(kwargs)
+     return randomGet(kwargs, "randomMotion")
+end
 
-function RandomPunish()
-    local req = {params = {{count = 4}}, method="randomPunish", id = 2}
-    local ret = json.decode(GoPost(DB_URL, json.encode(req)))
-    if ret.error == json.null then
-        return ret.result
-    end
-    return {_x, _x, _x, _x}
+function RandomPunish(kwargs)
+     return randomGet(kwargs, "randomPunish")
 end
 
 

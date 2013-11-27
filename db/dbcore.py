@@ -53,24 +53,44 @@ def updateSetName():
             g_updateName = {}
 
 
-def randomMotion(**kwargs):
-    count = kwargs["count"]
-    pos = random.sample(range(db.motion.count()), count)
+def randomMixGet(pub, pri, pri_limit, sid, db_pub, db_pri):
+    FIELD = {"_id": 0}
+    if pri != 0:
+        c = db_pri.find({"sid": sid}).count()
+        if c < pri_limit:
+            pri = 0
+            pub += pri
+        elif pri > c:
+            pub += (pri - c)
+            pri = c
     ret = []
+
+    pos = random.sample(range(db_pub.count()), pub)
     for p in pos:
-        ret.append(db.motion.find({}, {"_id": 0}).skip(p).limit(1).next())
+        ret.append(db_pub.find({}, FIELD).skip(p).limit(1).next())
+
+    if pri != 0:
+        pos = random.sample(range(db_pri.count()), pri)
+        for p in pos:
+            ret.append(db_pri.find({"sid": sid}, FIELD).skip(p).limit(1).next())
+    random.shuffle(ret)
     return ret, None
+
+
+def randomMotion(**kwargs):
+    return randomMixGet(kwargs.get("public") or 0, kwargs.get("private") or 0,
+                        LIMIT_PRI_MOTION, kwargs.get("sid") or 0,
+                        db.motion, db.motion_channel)
 
 
 def randomPunish(**kwargs):
-    count = kwargs["count"]
-    pos = random.sample(range(db.punish.count()), count)
-    ret = []
-    for p in pos:
-        ret.append(db.punish.find({}, {"_id": 0}).skip(p).limit(1).next())
-    for i in range(count):
+    ret, err = randomMixGet(kwargs.get("public") or 0, kwargs.get("private") or 0,
+                        LIMIT_PRI_PUNISH, kwargs.get("sid") or 0,
+                        db.punish, db.punish_channel)
+    for i in range(len(ret)):
         ret[i]["_id"] = str(i+1)
-    return ret, None
+    return ret, err
+
 
 
 #time=0 : ingore,   time=1 : now
