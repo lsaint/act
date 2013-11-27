@@ -83,7 +83,7 @@ message C2SLogin {
 message S2CLoginRep {
     required Result ret = 1;
     required GameMode mode = 2;
-    optional GameStatus status = 3;
+    required GameStatus status = 3;
     optional UserData user = 4;
 }
 
