@@ -30,7 +30,6 @@ func (aus *AuthServer) Start() {
             continue
         }
         go func(c net.Conn) {
-            fmt.Println("xml_rep")
             c.Write([]byte(XML_REP1))
             c.Write([]byte("\x00"))
             time.Sleep(time.Second)

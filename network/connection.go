@@ -108,7 +108,7 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
         if len_head == 17735 {
             this.WriteFlashAuthRep()
         } else {
-            fmt.Println("message len too long", len_head)
+            fmt.Println("message len too long", len_head, string(buff_head))
         }
         this.Close()
         return
