@@ -94,7 +94,6 @@ func (this *ClientConnection) duplexRead(buff []byte) bool {
         }
         return true
     }
-    this.Close()
     return false
 }
 
@@ -110,7 +109,6 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
         } else {
             fmt.Println("message len too long", len_head, string(buff_head))
         }
-        this.Close()
         return
     }
     ret = make([]byte, len_head)
@@ -119,11 +117,6 @@ func (this *ClientConnection) duplexReadBody() (ret []byte,  ok bool) {
     }
     ok = true
     return
-}
-
-func (this *ClientConnection) Close() {
-    this.sendchan = nil
-    this.conn.Close()
 }
 
 func (this *ClientConnection) WriteFlashAuthRep() {
