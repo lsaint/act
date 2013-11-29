@@ -58,8 +58,8 @@ def randomMixGet(pub, pri, pri_limit, sid, db_pub, db_pri):
     if pri != 0:
         c = db_pri.find({"sid": sid}).count()
         if c < pri_limit:
-            pri = 0
             pub += pri
+            pri = 0
         elif pri > c:
             pub += (pri - c)
             pri = c
