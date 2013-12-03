@@ -40,3 +40,23 @@ end
 function netCtrl(s)
     watchdog.netCtrl(s)
 end
+
+----- POST
+local post_sn = 1
+local post_callbacks = {} -- sn = cb
+function GoPostAsync(url, s, func)
+    local sn = post_sn
+    post_sn = post_sn + 1
+    goPostAsync(url, s, sn)
+    if func then
+        post_callbacks[sn] = func
+    end
+end
+
+function postDone(sn, ret)
+    local cb = post_callbacks[sn]
+    if cb then
+        cb(ret)
+        post_callbacks[sn] = cb
+    end
+end

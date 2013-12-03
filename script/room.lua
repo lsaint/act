@@ -425,7 +425,8 @@ end
 function GameRoom.postSamele(self)
     local p = {"report", self.tsid, self.sid, self.uid2player.n, self.mode, self.status, SAMPLER_PWD}
     local d = string.format("?action=%s&tsid=%s&ssid=%s&ccu=%s&mode=%s&status=%s&pwd=%s", unpack(p))
-    local ret = GoPost(string.format("%s%s", SAMPLER_URL, d), "L")
+    --local ret = GoPost(string.format("%s%s", SAMPLER_URL, d), "L")
+    GoPostAsync(string.format("%s%s", SAMPLER_URL, d), "L")
 end
 
 function GameRoom.OnPing(self, player, req)

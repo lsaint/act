@@ -23,6 +23,7 @@ const (
     UPDATE_INVOKE = iota
     CB_INVOKE = iota
     NET_CTRL  = iota
+    POST_DONE = iota
 )
 
 
@@ -84,6 +85,8 @@ func (this *LuaState) loop() {
                 this.invokeLua(CB_INVOKE, pack)
             case s := <-this.ctrlChan:
                 this.invokeLua(NET_CTRL, s)
+            case post_ret := <-this.pm.DoneChan:
+                this.invokeLua(POST_DONE, post_ret.Sn, <-post_ret.Ret)
         }
     }
 }
@@ -107,6 +110,10 @@ func (this *LuaState) invokeLua(t int, args ...interface{}) {
         case NET_CTRL:
             s, _ := args[0].(string)
             err = this.onNetCtrl(s)
+        case POST_DONE:
+            sn, _ := args[0].(int64)
+            ret, _ := args[1].(string)
+            err = this.onPostDone(sn, ret)
     }
     if err != nil {
         this.doPrintingErrors(err)
@@ -144,6 +151,13 @@ func (this *LuaState) onNetCtrl(s string) error {
     this.state.GetGlobal("netCtrl")
     this.state.PushString(s)
     return this.state.Call(1, 0)
+}
+
+func (this *LuaState) onPostDone(sn int64, ret string) error {
+    this.state.GetGlobal("postDone")
+    this.state.PushInteger(sn)
+    this.state.PushString(ret)
+    return this.state.Call(2, 0)
 }
 
 ////
@@ -238,7 +252,20 @@ func RegisterLuaFunction(LS *LuaState) {
         return 0
     }
 
-    // arg1: post_string    string
+    // arg1: url                string
+    // arg2: post_content       string
+    // arg3: sn                 int64
+    // return: post result's raw string
+    Lua_PostAsync := func(L *lua.State) int {
+        url := L.ToString(1)
+        post_string := L.ToString(2)
+        sn := L.ToInteger(3)
+        LS.pm.PostAsync(url, post_string, int64(sn))
+        return 0
+    }
+
+    // arg1: url                string
+    // arg2: post_content       string
     // return: post result's raw string
     Lua_Post := func(L *lua.State) int {
         url := L.ToString(1)
@@ -268,6 +295,7 @@ func RegisterLuaFunction(LS *LuaState) {
 
     LS.state.Register("GoSendMsg", Lua_SendMsg)
     LS.state.Register("GoPost", Lua_Post)
+    LS.state.Register("goPostAsync", Lua_PostAsync)
     LS.state.Register("GoMd5", Lua_Md5)
     LS.state.Register("GoGetSn", Lua_GetSn)
 }

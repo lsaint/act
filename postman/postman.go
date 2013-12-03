@@ -13,28 +13,19 @@ type PostRequest struct {
     Url             string
     Request         string
     Ret             chan string
+    Sn              int64
 }
 
 type Postman struct {
-    RequestChan         chan *PostRequest
+    DoneChan         chan *PostRequest
 }
 
 
 func NewPostman()  *Postman {
     pm := &Postman{make(chan *PostRequest, 128)}
-    go pm.loop()
     return pm
 }
 
-
-func (this *Postman) loop() {
-    for {
-        select {
-            case req := <-this.RequestChan:
-               this.post(req) 
-        }
-    }
-}
 
 func (this *Postman) post(req *PostRequest) {
     b := strings.NewReader(req.Request)
@@ -52,15 +43,31 @@ func (this *Postman) post(req *PostRequest) {
     }
 }
 
-func (this *Postman) Post(url, s string) string {
-    req := &PostRequest{url, s, make(chan string, 1)}
-    //this.post(req)
-    select {
-        case this.RequestChan <- req:
+func (this *Postman) PostAsync(url, s string, sn int64) {
+    go func() {
+        req := &PostRequest{url, s, make(chan string, 1), sn}
+        this.post(req)
+        select {
+            case this.DoneChan <- req:
 
-        case <-time.After(60 * time.Second):
-            close(req.Ret)
+            case <-time.After(30 * time.Second):
+                fmt.Println("DoneChan timeout", url, sn)
+        }
+    }()
+}
+
+func (this *Postman) Post(url, s string) string {
+    req := &PostRequest{url, s, make(chan string, 1), 0}
+    go func() {
+        this.post(req)
+    }()
+    select {
+        case ret := <-req.Ret:
+            return ret
+
+        case <-time.After(5 * time.Second):
+            fmt.Println("Post timeout", url)
     }
-    return <-req.Ret
+    return ""
 }
 
