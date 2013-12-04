@@ -36,9 +36,9 @@ function GiftMgr:new(tsid, sid, presenters)
 end
 
 -- req -- [to_uid, gift.id, gift.count]
-function GiftMgr:regGiftOrder(from_uid, req)
+function GiftMgr:regGiftOrder(player, req)
     if req.to_uid == 0 then return "", 0, "" end
-    local t, sn = os.date("%Y%m%d%H%M%S"), GoGetSn()
+    local t, sn, from_uid = os.date("%Y%m%d%H%M%S"), GoGetSn(), player.uid
     local to_md5_args = { APPID, from_uid, req.to_uid, req.gift.id,
                           req.gift.count, sn, self.tsid, SRVID, 
                           t, AUTH_KEY }
@@ -47,16 +47,19 @@ function GiftMgr:regGiftOrder(from_uid, req)
     local post_string = string.format(
        "appid=%s&fromuid=%s&touid=%s&giftid=%s&giftcount=%s&sn=%s&ch=%s&srvid=%s&time=%s&verify=%s", 
         unpack(to_md5_args))
-    local ss = GoPost(GIFT_URL, post_string)
-    local op, orderid, token = self:checkPostRet(ss)
-    if orderid ~= "" then
-        req["sid"] = self.sid -- for gift's callback 
-        self.orderid2req[orderid] = req
-        SaveGift({uid=from_uid, to_uid=req.to_uid, gid=req.gift.id, gcount=req.gift.count,
-                  sid=self.tsid, step=STEP_GIFT_REG, orderid=orderid, sn=sn, op_ret=op, 
-                  create_time=TIME_NOW, finish_time=TIME_INGORE})
-    end
-    return token, sn, orderid
+    --local ss = GoPost(GIFT_URL, post_string)
+    GoPostAsync(GIFT_URL, post_string, function(ss)
+        local op, orderid, token = self:checkPostRet(ss)
+        player:SendMsg("S2CRegGiftRep", {token = token, sn=sn, orderid=orderid})
+        tprint("RegGiftRep", orderid, sn, token)
+        if orderid ~= "" then
+            req["sid"] = self.sid -- for gift's callback 
+            self.orderid2req[orderid] = req
+            SaveGift({uid=from_uid, to_uid=req.to_uid, gid=req.gift.id, gcount=req.gift.count,
+                      sid=self.tsid, step=STEP_GIFT_REG, orderid=orderid, sn=sn, op_ret=op, 
+                      create_time=TIME_NOW, finish_time=TIME_INGORE})
+        end
+    end)
 end
 
 function GiftMgr:checkPostRet(ss)
@@ -160,11 +163,13 @@ function GiftMgr.finishGift(uid, orderid, gid, gcount)
     local post_string = string.format(
        "appid=%s&uid=%s&orderid=%s&srvid=%s&time=%s&verify=%s", 
         unpack(to_md5_args))
-    local ss = GoPost(FINISH_GIFT_URL, post_string)
-    tprint("finishGift", uid, orderid, ss)
-    local ret = parseUrlArg(ss)
-    local money = gcount * GiftCost[gid]
-    SaveGift({orderid=orderid, step=STEP_GIFT_FINISH, finish_time=TIME_NOW, 
-              money=money, op_ret=(ret["op_ret"] or "")})
+    --local ss = GoPost(FINISH_GIFT_URL, post_string)
+    GoPostAsync(FINISH_GIFT_URL, post_string, function(ss)
+        tprint("finishGift", uid, orderid, ss)
+        local ret = parseUrlArg(ss)
+        local money = gcount * GiftCost[gid]
+        SaveGift({orderid=orderid, step=STEP_GIFT_FINISH, finish_time=TIME_NOW, 
+                  money=money, op_ret=(ret["op_ret"] or "")})
+    end)
 end
 

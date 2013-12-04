@@ -282,10 +282,7 @@ function GameRoom.stopGame(self, t, n)
 end
 
 function GameRoom.OnRegGift(self, player, req)
-    local rep = {token = ""}
-    rep.token, rep.sn, rep.orderid = self.giftmgr:regGiftOrder(player.uid, req)
-    player:SendMsg("S2CRegGiftRep", rep)
-    tprint("RegGiftRep", dump(rep))
+    self.giftmgr:regGiftOrder(player, req)
 end
 
 function GameRoom.OnGiftCb(self, op, from_uid, to_uid, gid, gcount, orderid)
