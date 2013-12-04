@@ -23,7 +23,7 @@ function GameRoom.init(self)
     print("init")
     self.over = {}
     self.scores = {0, 0}
-    self.round_info = {} -- {presenter, round_number}
+    self.round_info = {} -- {presenter, round_number, motion, start_time, total_time}
     self.timer = Timer:new(self.sid)
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.tsid, self.sid, self.presenters)
@@ -105,13 +105,13 @@ function GameRoom.OnLogin(self, player, req)
         player:SendMsg("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
         player:SendMsg("S2CNotifyScores", {scores = self.scores})
     elseif self.status == "Round" and #self.round_info ~= 0 then
-        local t = ROUND_TIME - (os.time() - self.round_info[4])
-        if t < 0 then return end
+        local remain_time = self.round_info[5] - (os.time() - self.round_info[4])
+        if remain_time < 0 then return end
         player:SendMsg("S2CNotifyRoundStart", {
                 presenter = {uid = self.round_info[1].uid},
                 round = self.round_info[2],
                 mot = self.round_info[3],
-                time = t,
+                time = remain_time,
             })
     end
     SaveName(player.uid, player.name)

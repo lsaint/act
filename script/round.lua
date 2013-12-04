@@ -59,7 +59,7 @@ end
 
 function RoundMgr:doRound(presenter, r, m, t)
     print("DoRound", r)
-    self.room.round_info = {presenter, r, m, os.time()}
+    self.room.round_info = {presenter, r, m, os.time(), t}
     self.room.guess = Guess:new(m)
     local bc = {
         presenter = {uid = presenter.uid},
