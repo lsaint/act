@@ -70,7 +70,7 @@ def randomMixGet(pub, pri, pri_limit, sid, db_pub, db_pri):
         ret.append(db_pub.find({}, FIELD).skip(p).limit(1).next())
 
     if pri != 0:
-        pos = random.sample(range(db_pri.count()), pri)
+        pos = random.sample(range(c), pri)
         for p in pos:
             ret.append(db_pri.find({"sid": sid}, FIELD).skip(p).limit(1).next())
     random.shuffle(ret)
