@@ -254,6 +254,16 @@ message S2CNotifyBillboard {
 message C2SAdminClear {
 }
 
+// 10
+message C2SAbortRound {
+    required uint32 round_num = 1;
+}
+
+// 2017
+message S2CNotifyAbortRound {
+    required UserData user = 1;
+}
+
 // 37
 message C2SPing {
 }

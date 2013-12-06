@@ -17,6 +17,7 @@ var URI2PROTO Uri2Proto = Uri2Proto {
     7       :   reflect.TypeOf(C2SRegGift{}),
     8       :   reflect.TypeOf(C2SChangeMode{}),
     9       :   reflect.TypeOf(C2SAdminClear{}),
+    10      :   reflect.TypeOf(C2SAbortRound{}),
     37      :   reflect.TypeOf(C2SPing{}),
 }
 

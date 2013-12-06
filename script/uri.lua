@@ -26,3 +26,4 @@ URI["proto.S2CNotifyPowerPoll"] =       2013
 URI["proto.S2CNotifyA2B"] =             2014
 URI["proto.S2CNotifyChangeMode"] =      2015
 URI["proto.S2CNotifyBillboard"] =       2016
+URI["proto.S2CNotifyAbortRound"] =      2017

@@ -23,7 +23,6 @@ function GameRoom.init(self)
     print("init")
     self.over = {}
     self.scores = {0, 0}
-    self.round_info = {} -- {presenter, round_number, motion, start_time, total_time}
     self.timer = Timer:new(self.sid)
     self.guess = nil
     self.giftmgr = GiftMgr:new(self.tsid, self.sid, self.presenters)
@@ -43,7 +42,7 @@ function GameRoom.Broadcast(self, pname, msg)
 end
 
 function GameRoom.settimer(self, interval, count, func, ...)
-    self.timer:settimer(interval, count, func, ...)
+    return self.timer:settimer(interval, count, func, ...)
 end
 
 function GameRoom.notifyStatus(self, st)
@@ -104,13 +103,13 @@ function GameRoom.OnLogin(self, player, req)
             {options = self.giftmgr.options, loser = self:getLoser().user})
         player:SendMsg("S2CNotifyPunish", {punish = self.giftmgr:getPollResult()})
         player:SendMsg("S2CNotifyScores", {scores = self.scores})
-    elseif self.status == "Round" and #self.round_info ~= 0 then
-        local remain_time = self.round_info[5] - (os.time() - self.round_info[4])
+    elseif self.status == "Round" and self.roundmgr then
+        local remain_time = self.roundmgr:GetRemainTime()
         if remain_time < 0 then return end
         player:SendMsg("S2CNotifyRoundStart", {
-                presenter = {uid = self.round_info[1].uid},
-                round = self.round_info[2],
-                mot = self.round_info[3],
+                presenter = {uid = self.roundmgr:GetCurPresenter().uid},
+                round = self.roundmgr.roundNum,
+                mot = self.roundmgr:GetCurMotion(),
                 time = remain_time,
             })
     end
@@ -145,7 +144,7 @@ function GameRoom.OnPrelude(self, player, req)
         if a.role == "PresenterA" and b.role == "PresenterB" then
             tprint("START", self.tsid, self.sid)
             self:notifyStatus("Round")
-            self.timer:settimer(5, 1, self.roundmgr.roundStart, self.roundmgr)
+            self.timer:settimer(5, 1, self.roundmgr.RoundStart, self.roundmgr)
             self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
             self.timer:settimer(BC_BILLBOARD_INTERVAL, nil, self.notifyBillboard, self)
             self.giftmgr.presenters = self.presenters
@@ -349,9 +348,9 @@ function GameRoom.OnChat(self, player, req)
 end
 
 function  GameRoom.addScore(self)
-    if self.round_info[1] == self.presenters[1] then
+    if self.roundmgr.presenter == self.presenters[1] then
         self.scores[1] = self.scores[1] + BINGO_SCORE
-    elseif self.round_info[1] == self.presenters[2] then
+    elseif self.roundmgr.presenter == self.presenters[2] then
         self.scores[2] = self.scores[2] + BINGO_SCORE
     end
 end
@@ -409,6 +408,12 @@ function GameRoom.OnLogout(self, player, req)
         end
     end
     self:delPlayer(player)
+end
+
+function GameRoom.OnAbortRound(self, player, req)
+    if self.roundmgr:AbortRound(player, req.round_num) then
+        self:Broadcast("S2CNotifyAbortRound", {user = {uid = player.uid}})
+    end
 end
 
 function GameRoom.OnNetCtrl(self, dt)

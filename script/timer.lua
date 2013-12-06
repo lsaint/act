@@ -43,6 +43,13 @@ function Timer:rmtimer(tid)
     self.timers[tid] = nil
 end
 
+function Timer:activeTimer(tid)
+    local timer = self.timers[tid]
+    if timer then
+        timer[1] = 0
+    end
+end
+
 function TimerUpdate() 
     for k, v in pairs(time_table) do
         v:update()
