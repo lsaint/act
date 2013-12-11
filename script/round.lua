@@ -24,7 +24,6 @@ end
 function RoundMgr:RoundStart()
     print("RoundStart")
     self.mode2start[self.room.mode](self)
-    self.room:settimer(BC_SCORE_INTERVAL, nil, self.room.notifyScore, self.room)
 end
 
 function RoundMgr:startRoundAct()

@@ -144,9 +144,10 @@ function GameRoom.OnPrelude(self, player, req)
         if a.role == "PresenterA" and b.role == "PresenterB" then
             tprint("START", self.tsid, self.sid)
             self:notifyStatus("Round")
-            self.timer:settimer(5, 1, self.roundmgr.RoundStart, self.roundmgr)
-            self.timer:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
-            self.timer:settimer(BC_BILLBOARD_INTERVAL, nil, self.notifyBillboard, self)
+            self:settimer(5, 1, self.roundmgr.RoundStart, self.roundmgr)
+            self:settimer(BC_TOPN_INTERVAL, nil, self.notifyTopn, self)
+            self:settimer(BC_BILLBOARD_INTERVAL, nil, self.notifyBillboard, self)
+            self.scoreTimerId = self:settimer(BC_SCORE_INTERVAL, nil, self.notifyScore, self)
             self.giftmgr.presenters = self.presenters
         end
     end
@@ -214,6 +215,7 @@ function GameRoom.pollStart(self)
     self:Broadcast("S2CNotfiyPunishOptions", bc)
     self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
     self.timer:settimer(BC_POLLS_INTERVAL, POLL_TIME/BC_POLLS_INTERVAL+1, self.notifyPolls, self)
+    self.timer:rmtimer(self.scoreTimerId)
 end
 
 function GameRoom.OnPoll(self, player, req)
