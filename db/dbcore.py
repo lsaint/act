@@ -54,7 +54,7 @@ def updateSetName():
 
 
 def randomMixGet(pub, pri, pri_limit, sid, db_pub, db_pri):
-    FIELD = {"_id": 0}
+    FIELD = {"_id": 0, "sid": 0}
     if pri != 0:
         c = db_pri.find({"sid": sid}).count()
         if c < pri_limit:
