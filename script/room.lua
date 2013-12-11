@@ -202,6 +202,7 @@ end
 
 function GameRoom.notifyScore(self)
     local bc = {scores = self.scores}
+    print(dump(bc))
     self:Broadcast("S2CNotifyScores", bc)
 end
 
@@ -348,9 +349,9 @@ function GameRoom.OnChat(self, player, req)
 end
 
 function  GameRoom.addScore(self)
-    if self.roundmgr.presenter == self.presenters[1] then
+    if self.roundmgr:GetCurPresenter() == self.presenters[1] then
         self.scores[1] = self.scores[1] + BINGO_SCORE
-    elseif self.roundmgr.presenter == self.presenters[2] then
+    elseif self.roundmgr:GetCurPresenter() == self.presenters[2] then
         self.scores[2] = self.scores[2] + BINGO_SCORE
     end
 end
