@@ -202,7 +202,6 @@ end
 
 function GameRoom.notifyScore(self)
     local bc = {scores = self.scores}
-    print(dump(bc))
     self:Broadcast("S2CNotifyScores", bc)
 end
 
@@ -214,7 +213,7 @@ function GameRoom.pollStart(self)
     self.giftmgr.options = bc.options
     self:Broadcast("S2CNotfiyPunishOptions", bc)
     self.timer:settimer(POLL_TIME, 1, self.punishStart, self)
-    self.timer:settimer(BC_POLLS_INTERVAL, POLL_TIME/2+1, self.notifyPolls, self)
+    self.timer:settimer(BC_POLLS_INTERVAL, POLL_TIME/BC_POLLS_INTERVAL+1, self.notifyPolls, self)
 end
 
 function GameRoom.OnPoll(self, player, req)
